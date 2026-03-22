@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>3C Card Games — Admin</title>
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Lato:wght@300;400;700&display=swap" rel="stylesheet" />
+
+  <!-- Supabase client -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+
+  <!-- Styles -->
+  <link rel="stylesheet" href="admin.css" />
+</head>
+<body dir="ltr">
+
+  <!-- ── MAIN APP CONTAINER ──────────────────────────── -->
+  <div id="app">
+
+    <!-- ── TOP CONTROLS ───────────────────────────────── -->
+    <div style="direction:ltr; text-align:left;">
+
+      <!-- Deck Title -->
+      <label for="deckTitleInput">Deck Title:</label>
+      <input
+        type="text"
+        id="deckTitleInput"
+        placeholder="Enter deck title"
+        style="direction:ltr; text-align:left;"
+      />
+
+      <!-- Slug display -->
+      <div>
+        Card Deck Editor for
+        <strong id="deckSlugLabel">[new deck]</strong>
+        <span style="font-size:smaller; color:#aaa;" id="deckSlugSub"></span>
+      </div>
+
+      <!-- Deck URL block -->
+      <div id="deckUrlBlock">
+        <strong style="display:block; font-size:1.1em; margin-bottom:8px;">
+          Deck URL for sharing:
+        </strong>
+        <input
+          type="text"
+          id="deckUrlCopyField"
+          readonly
+          placeholder="URL appears after saving"
+          style="width:75%; font-size:1em; padding:6px; direction:ltr; text-align:left;"
+        />
+        <button id="copyDeckUrlBtn" style="margin-left:12px; padding:5px 14px;">
+          Copy URL
+        </button>
+        <span id="deckUrlCopiedMsg" style="margin-left:8px; color:green; display:none;">
+          Copied!
+        </span>
+      </div>
+
+      <!-- Action buttons -->
+      <button id="newDeckBtn" style="margin-right:12px;">New Deck</button>
+      <button id="saveDeckBtn">Save Deck</button>
+
+    </div>
+
+    <!-- ── ROW FLEX: sidebar + main panel ─────────────── -->
+    <div class="row-flex">
+
+      <!-- ── SIDEBAR: card thumbnail list ──────────────── -->
+      <div class="sidebar">
+
+        <div class="page-list">
+          <strong>Cards</strong>
+          <ul id="cardThumbList">
+            <!-- Card rows injected by admin.app.js
+                 Each row: [thumb] [Card #N] [▲] [▼] [✕] -->
+          </ul>
+        </div>
+
+        <!-- Add Card -->
+        <div class="page-actions">
+          <button id="addCardBtn">+ Add Card</button>
+        </div>
+
+      </div><!-- /sidebar -->
+
+      <!-- ── MAIN PANEL: card editor ─────────────────── -->
+      <div class="mainpanel">
+
+        <!-- Empty state -->
+        <div id="panelEmpty">
+          <p style="color:#aaa; margin-top:60px; text-align:center;">
+            Select a card from the sidebar<br>
+            or click <strong>+ Add Card</strong> to begin.
+          </p>
+        </div>
+
+        <!-- Card editor — hidden until card selected -->
+        <div id="panelEditor" style="display:none;">
+
+          <div class="header">
+            <h1 id="cardEditorTitle">Card #1</h1>
+          </div>
+
+          <div class="editor-canvas-wrap">
+
+            <!-- ── FRONT ──────────────────────────────── -->
+            <div>
+              <div class="block-settings">
+                <label><strong>Front</strong></label>
+              </div>
+              <div class="block-settings">
+                <label class="upload-btn" for="uploadFront">
+                  📁 Upload from computer
+                </label>
+                <input
+                  type="file"
+                  id="uploadFront"
+                  accept="image/*,video/*"
+                  style="display:none;"
+                />
+                <span id="uploadFrontName" class="upload-filename">No file chosen</span>
+              </div>
+
+              <!-- Portrait preview -->
+              <div class="editor-canvas" id="frontPreview">
+                <img
+                  class="bg"
+                  id="frontPreviewImg"
+                  src=""
+                  alt=""
+                  style="display:none;"
+                />
+                <video
+                  id="frontPreviewVideo"
+                  autoplay muted loop playsinline
+                  style="display:none; width:100%; height:100%; object-fit:cover; position:absolute; top:0; left:0;"
+                ></video>
+                <div id="frontPreviewEmpty" style="
+                  position:absolute; inset:0; display:flex;
+                  align-items:center; justify-content:center;
+                  color:#aaa; font-size:0.9em;">
+                  Front preview
+                </div>
+              </div>
+              <p style="font-size:0.8em; color:#aaa; margin-top:4px;">
+                FRONT — number / design face
+              </p>
+            </div>
+
+            <!-- ── BACK ───────────────────────────────── -->
+            <div>
+              <div class="block-settings">
+                <label><strong>Back</strong></label>
+              </div>
+              <div class="block-settings">
+                <label class="upload-btn" for="uploadBack">
+                  📁 Upload from computer
+                </label>
+                <input
+                  type="file"
+                  id="uploadBack"
+                  accept="image/*,video/*"
+                  style="display:none;"
+                />
+                <span id="uploadBackName" class="upload-filename">No file chosen</span>
+              </div>
+
+              <!-- Portrait preview -->
+              <div class="editor-canvas" id="backPreview">
+                <img
+                  class="bg"
+                  id="backPreviewImg"
+                  src=""
+                  alt=""
+                  style="display:none;"
+                />
+                <video
+                  id="backPreviewVideo"
+                  autoplay muted loop playsinline
+                  style="display:none; width:100%; height:100%; object-fit:cover; position:absolute; top:0; left:0;"
+                ></video>
+                <div id="backPreviewEmpty" style="
+                  position:absolute; inset:0; display:flex;
+                  align-items:center; justify-content:center;
+                  color:#aaa; font-size:0.9em;">
+                  Back preview
+                </div>
+              </div>
+              <p style="font-size:0.8em; color:#aaa; margin-top:4px;">
+                BACK — wisdom / message face
+              </p>
+            </div>
+
+          </div><!-- /editor-canvas-wrap -->
+
+          <!-- ── DECK MEDIA (landing + finale, per deck) ── -->
+          <div id="deckMediaSection" style="margin-top:28px;">
+            <h2 style="margin-bottom:12px; color:#4682b4;">Deck Media</h2>
+
+            <!-- Landing -->
+            <div class="block-settings">
+              <label><strong>Landing</strong></label>
+              <label class="upload-btn" for="uploadLanding">
+                📁 Upload from computer
+              </label>
+              <input
+                type="file"
+                id="uploadLanding"
+                accept="image/*,video/*"
+                style="display:none;"
+              />
+              <span id="uploadLandingName" class="upload-filename">No file chosen</span>
+            </div>
+
+            <!-- Finale -->
+            <div class="block-settings" style="margin-top:10px;">
+              <label><strong>Finale</strong></label>
+              <label class="upload-btn" for="uploadFinale">
+                📁 Upload from computer
+              </label>
+              <input
+                type="file"
+                id="uploadFinale"
+                accept="image/*,video/*"
+                style="display:none;"
+              />
+              <span id="uploadFinaleName" class="upload-filename">No file chosen</span>
+            </div>
+
+          </div><!-- /deckMediaSection -->
+
+        </div><!-- /panelEditor -->
+
+      </div><!-- /mainpanel -->
+
+    </div><!-- /row-flex -->
+
+    <!-- ── DECK ARCHIVE TABLE ─────────────────────────────
+         All saved decks from Supabase.
+         Columns: slug | title | cards | URL (copy + open) | Preview
+    ─────────────────────────────────────────────────────── -->
+    <div id="deckArchive">
+      <!-- Injected by renderDeckArchive() in admin.app.js -->
+    </div>
+
+  </div><!-- /app -->
+
+  <!-- Fatal error fallback -->
+  <div id="fatal-error" style="display:none; color:#c00; font-size:1.1em; margin:32px;"></div>
+
+  <script>
+    if (!document.getElementById('app')) {
+      const el = document.getElementById('fatal-error');
+      el.innerText = 'Fatal Error: #app container not found.';
+      el.style.display = 'block';
+      throw new Error('Fatal Error: #app container not found.');
+    }
+    document.documentElement.setAttribute('dir', 'ltr');
+    document.body.setAttribute('dir', 'ltr');
+  </script>
+
+  <!-- Admin logic -->
+  <script src="admin.app.js" type="module"></script>
+
+</body>
+</html>
