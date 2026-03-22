@@ -1,28 +1,23 @@
 /**
  * 3C Card Games — Admin App
  * ─────────────────────────
- * Mirrors quiz admin logic/structure.
- * Images preview locally only — never uploaded here.
- * On Save: deck JSON is pushed to R2 via worker.
+ * All media loaded from computer — local preview only, never uploaded here.
+ * On Save Deck: ONE JSON pushed to R2 via worker with auto-constructed R2 URLs.
  * Supabase holds the deck index (slug, title, url, r2_key).
  *
- * R2 URL convention (Chef uploads matching filenames to Cloudflare):
- *   https://files.3c-public-library.org/CardGames/{slug}/landing.png
- *   https://files.3c-public-library.org/CardGames/{slug}/finale.png
- *   https://files.3c-public-library.org/CardGames/{slug}/card-01-front.png
- *   https://files.3c-public-library.org/CardGames/{slug}/card-01-back.png
+ * JSON fields saved:
+ *   intro   → public/index.html screen-intro  (loaded from computer in admin)
+ *   finale  → public/index.html screen-finale (loaded from computer in admin)
+ *   cards[] → front + back per card           (loaded from computer in admin)
+ *   landing → patched separately by landing-upload.html after upload to R2
  */
 
-import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+import { fetchAllDecks, generateNextSlug, saveDeck, deleteDeck } from './supabaseAPI.js';
 
 /* ── CONFIG ─────────────────────────────────────────── */
-const SUPABASE_URL  = 'https://cgxjqsbrditbteqhdyus.supabase.co';
-const SUPABASE_KEY  = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNneGpxc2JyZGl0YnRlcWhkeXVzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTExMTY1ODEsImV4cCI6MjA2NjY5MjU4MX0.xUDy5ic-r52kmRtocdcW8Np9-lczjMZ6YKPXc03rIG4';
 const WORKER_URL    = 'https://3c-card-games.3c-innertherapy.workers.dev';
 const R2_PUBLIC     = 'https://files.3c-public-library.org/CardGames';
-const PUBLIC_APP    = 'https://anica-blip.github.io/3c-card-games/public/index.html';
-
-const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+const PUBLIC_APP    = 'https://anica-blip.github.io/3c-card-games/landing.html';
 const $  = (sel) => document.querySelector(sel);
 
 /* ── STATE ──────────────────────────────────────────── */
@@ -34,11 +29,11 @@ let selectedCardIdx = -1;  // which card is open in editor
 
 // Current deck in memory
 let deckData = {
-  slug:    '',
-  title:   '',
-  landing: { filename: 'landing.png',  localUrl: null, isVideo: false },
-  finale:  { filename: 'finale.png',   localUrl: null, isVideo: false },
-  cards:   []
+  slug:   '',
+  title:  '',
+  intro:  { filename: 'intro.png',  localUrl: null, isVideo: false },
+  finale: { filename: 'finale.png', localUrl: null, isVideo: false },
+  cards:  []
   // card shape: { front: { filename, localUrl, isVideo }, back: { filename, localUrl, isVideo } }
 };
 
@@ -62,24 +57,14 @@ function isVideoFile(filename) {
   return /\.(mp4|webm|mov|ogg)$/i.test(filename);
 }
 
-/* ── SUPABASE ───────────────────────────────────────── */
+/* ── DECK ARCHIVE ───────────────────────────────────── */
 async function fetchDeckArchive() {
-  const { data, error } = await supabase
-    .from('card_decks')
-    .select('deck_slug, title, deck_url, r2_key, card_count')
-    .order('id', { ascending: false });
-  deckArchive = data || [];
+  deckArchive = await fetchAllDecks();
 }
 
 async function generateNextDeckSlug() {
   await fetchDeckArchive();
-  const used = deckArchive.map(d => {
-    const m = d.deck_slug.match(/^deck\.(\d+)$/);
-    return m ? parseInt(m[1]) : null;
-  }).filter(n => n !== null);
-  let n = 1;
-  while (used.includes(n)) n++;
-  return `deck.${pad(n)}`;
+  return generateNextSlug(deckArchive);
 }
 
 /* ── NEW DECK ───────────────────────────────────────── */
@@ -89,11 +74,11 @@ async function onNewDeck() {
   DECK_URL   = generateDeckUrl(DECK_SLUG);
 
   deckData = {
-    slug:    DECK_SLUG,
-    title:   '',
-    landing: { filename: 'landing.png', localUrl: null, isVideo: false },
-    finale:  { filename: 'finale.png',  localUrl: null, isVideo: false },
-    cards:   []
+    slug:   DECK_SLUG,
+    title:  '',
+    intro:  { filename: 'intro.png',  localUrl: null, isVideo: false },
+    finale: { filename: 'finale.png', localUrl: null, isVideo: false },
+    cards:  []
   };
 
   selectedCardIdx = -1;
@@ -181,8 +166,11 @@ function handleUpload(inputEl, target) {
   target.localUrl = URL.createObjectURL(file);
   target.isVideo  = file.type.startsWith('video/');
 
-  // Keep the original filename extension for reference
-  // (R2 filename stays as the convention — .png or .mp4)
+  // Capture real file extension — .png, .jpg, .mp4, .webm etc.
+  // Updates filename so JSON stores the correct R2 URL extension
+  const ext = file.name.split('.').pop().toLowerCase();
+  target.filename = target.filename.replace(/\.[^.]+$/, `.${ext}`);
+
   render();
 }
 
@@ -206,10 +194,10 @@ function wireUploads() {
     };
   }
 
-  // Landing upload
-  const upLanding = $('#uploadLanding');
-  if (upLanding) {
-    upLanding.onchange = () => handleUpload(upLanding, deckData.landing);
+  // Intro upload
+  const upIntro = $('#uploadIntro');
+  if (upIntro) {
+    upIntro.onchange = () => handleUpload(upIntro, deckData.intro);
   }
 
   // Finale upload
@@ -222,15 +210,18 @@ function wireUploads() {
 /* ── BUILD DECK JSON FOR SAVING ─────────────────────── */
 /*
   Local preview URLs are never stored.
-  JSON always uses the constructed R2 public URLs.
-  Chef must upload matching filenames to R2 via Cloudflare dashboard.
+  JSON always uses auto-constructed R2 public URLs.
+  All media is loaded from computer for preview only —
+  filenames are captured from the file and stored as R2 URLs.
+  landing field is left blank here — patched by landing-upload.html.
 */
 function buildDeckJson() {
   const slug = DECK_SLUG;
   return {
     slug,
     title:   DECK_TITLE,
-    landing: r2Url(slug, deckData.landing.filename),
+    landing: '',   // patched by landing-upload.html after R2 upload
+    intro:   r2Url(slug, deckData.intro.filename),
     finale:  r2Url(slug, deckData.finale.filename),
     cards:   deckData.cards.map((c, i) => ({
       id:    i + 1,
@@ -278,16 +269,13 @@ async function onSaveDeck() {
   }
 
   // ── Step 2: Upsert Supabase index row ──────────────
-  const { data, error } = await supabase
-    .from('card_decks')
-    .upsert([{
-      deck_slug:  DECK_SLUG,
-      title:      DECK_TITLE,
-      deck_url:   generateDeckUrl(DECK_SLUG),
-      r2_key,
-      card_count: deckData.cards.length
-    }], { onConflict: 'deck_slug' })
-    .select();
+  const { data, error } = await saveDeck({
+    deck_slug:  DECK_SLUG,
+    title:      DECK_TITLE,
+    deck_url:   generateDeckUrl(DECK_SLUG),
+    r2_key,
+    card_count: deckData.cards.length
+  });
 
   if (error) {
     alert('Deck saved to R2 ✅\nBut Supabase index failed: ' + error.message);
@@ -323,14 +311,17 @@ async function onLoadDeckFromArchive(slug) {
 
     // Reconstruct deckData from saved JSON
     // localUrl is null — no local file loaded yet
+    // Extract real extensions from saved R2 URLs
+    const extFrom = url => url ? url.split('.').pop().toLowerCase() : 'png';
+
     deckData = {
       slug,
-      title:   json.title || '',
-      landing: { filename: 'landing.png', localUrl: null, isVideo: false },
-      finale:  { filename: 'finale.png',  localUrl: null, isVideo: false },
-      cards:   (json.cards || []).map((c, i) => ({
-        front: { filename: cardFilename(i, 'front'), localUrl: null, isVideo: false },
-        back:  { filename: cardFilename(i, 'back'),  localUrl: null, isVideo: false }
+      title:  json.title || '',
+      intro:  { filename: `intro.${extFrom(json.intro)}`,   localUrl: null, isVideo: /mp4|webm|mov|ogg/i.test(extFrom(json.intro)) },
+      finale: { filename: `finale.${extFrom(json.finale)}`, localUrl: null, isVideo: /mp4|webm|mov|ogg/i.test(extFrom(json.finale)) },
+      cards:  (json.cards || []).map((c, i) => ({
+        front: { filename: `card-${pad(i+1)}-front.${extFrom(c.front)}`, localUrl: null, isVideo: /mp4|webm|mov|ogg/i.test(extFrom(c.front)) },
+        back:  { filename: `card-${pad(i+1)}-back.${extFrom(c.back)}`,   localUrl: null, isVideo: /mp4|webm|mov|ogg/i.test(extFrom(c.back)) }
       }))
     };
 
@@ -354,10 +345,7 @@ async function onDeleteDeck(slug) {
   }
 
   // Delete from Supabase
-  const { error } = await supabase
-    .from('card_decks')
-    .delete()
-    .eq('deck_slug', slug);
+  const { error } = await deleteDeck(slug);
 
   if (error) {
     alert('Supabase delete failed: ' + error.message);
@@ -367,7 +355,7 @@ async function onDeleteDeck(slug) {
       DECK_SLUG  = null;
       DECK_TITLE = '';
       DECK_URL   = '';
-      deckData   = { slug: '', title: '', landing: { filename: 'landing.png', localUrl: null, isVideo: false }, finale: { filename: 'finale.png', localUrl: null, isVideo: false }, cards: [] };
+      deckData   = { slug: '', title: '', intro: { filename: 'intro.png', localUrl: null, isVideo: false }, finale: { filename: 'finale.png', localUrl: null, isVideo: false }, cards: [] };
       selectedCardIdx = -1;
     }
     await fetchDeckArchive();
@@ -463,9 +451,9 @@ function renderCardEditor() {
     '#backPreviewEmpty'
   );
 
-  // ── Landing preview (filename label) ──
-  const landingName = $('#uploadLandingName');
-  if (landingName) landingName.textContent = deckData.landing.filename;
+  // ── Intro preview (filename label) ──
+  const introName = $('#uploadIntroName');
+  if (introName) introName.textContent = deckData.intro.filename;
 
   // ── Finale preview (filename label) ──
   const finaleName = $('#uploadFinaleName');
