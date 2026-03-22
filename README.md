@@ -21,11 +21,12 @@ panel — no code changes needed to update decks.
 
 ## Repository Structure
 
-| Folder | Purpose |
-|--------|---------|
-| `public/` | Player-facing game view |
-| `admin/`  | Deck management admin panel |
-| `worker/` | Cloudflare Worker for R2 writes |
+3c-card-games/
+├── index.html
+├── public/
+│   └── index.html
+├── admin/
+│   └── index.html
 
 ---
 
