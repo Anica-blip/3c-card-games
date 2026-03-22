@@ -1,29 +1,36 @@
 /**
  * 3C Card Games — Cloudflare Worker
- * ──────────────────────────────────
- * Handles R2 read / write / delete for deck JSON files.
- * Card images are uploaded directly via Cloudflare dashboard
- * or wrangler — this worker only manages deck.json files.
+ * ──────────────────────────────────────────────────
  *
  * Routes:
- *   GET    /deck/:slug   → fetch deck JSON from R2
- *   PUT    /deck/:slug   → save deck JSON to R2
- *   DELETE /deck/:slug   → remove deck JSON from R2
  *
- * R2 key pattern:
+ *   DECK JSON
+ *   GET    /deck/:slug        → fetch deck.json from R2
+ *   PUT    /deck/:slug        → save deck.json to R2
+ *   DELETE /deck/:slug        → delete deck.json from R2
+ *
+ *   LANDING MEDIA
+ *   PUT    /landing/:slug     → save landing image/video binary to R2
+ *                               stored at: CardGames/{slug}/landing.{ext}
+ *
+ * R2 key conventions:
  *   CardGames/{slug}/deck.json
+ *   CardGames/{slug}/landing.png  (or .mp4, .webm etc.)
+ *   CardGames/{slug}/card-01-front.png  ← uploaded via Cloudflare dashboard
+ *   CardGames/{slug}/card-01-back.png   ← uploaded via Cloudflare dashboard
  *
- * Wrangler binding name: CARD_GAMES_BUCKET
- * (set in wrangler.toml → r2_buckets)
+ * R2 binding name: CARD_GAMES_BUCKET
+ * (wrangler.toml → r2_buckets → binding = "CARD_GAMES_BUCKET")
  */
 
 const ALLOWED_ORIGINS = [
-  'https://anica-blip.github.io',   // GitHub Pages (admin + public)
-  'http://localhost:5500',           // Live Server local dev
+  'https://anica-blip.github.io',
+  'http://localhost:5500',
   'http://127.0.0.1:5500',
   'http://localhost:3000',
 ];
 
+/* ── CORS headers ─────────────────────────────────── */
 function corsHeaders(origin) {
   const allowed = ALLOWED_ORIGINS.includes(origin)
     ? origin
@@ -31,7 +38,7 @@ function corsHeaders(origin) {
   return {
     'Access-Control-Allow-Origin':  allowed,
     'Access-Control-Allow-Methods': 'GET, PUT, DELETE, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type',
+    'Access-Control-Allow-Headers': 'Content-Type, X-File-Extension',
   };
 }
 
@@ -46,13 +53,31 @@ function respond(body, status, origin, extraHeaders = {}) {
   });
 }
 
+/* ── MIME type map ────────────────────────────────── */
+const MIME_TYPES = {
+  png:  'image/png',
+  jpg:  'image/jpeg',
+  jpeg: 'image/jpeg',
+  gif:  'image/gif',
+  webp: 'image/webp',
+  mp4:  'video/mp4',
+  webm: 'video/webm',
+  mov:  'video/quicktime',
+  ogg:  'video/ogg',
+};
+
+function getMimeType(ext) {
+  return MIME_TYPES[ext.toLowerCase()] || 'application/octet-stream';
+}
+
+/* ── Main fetch handler ───────────────────────────── */
 export default {
   async fetch(request, env) {
     const origin = request.headers.get('Origin') || '';
     const method = request.method.toUpperCase();
     const url    = new URL(request.url);
 
-    // ── CORS preflight ──────────────────────────────
+    /* ── CORS preflight ─────────────────────────── */
     if (method === 'OPTIONS') {
       return new Response(null, {
         status: 204,
@@ -60,87 +85,153 @@ export default {
       });
     }
 
-    // ── Route: /deck/:slug ──────────────────────────
-    const match = url.pathname.match(/^\/deck\/([a-z0-9\-]+)$/i);
-    if (!match) {
+    /* ── Route: /deck/:slug ─────────────────────── */
+    const deckMatch = url.pathname.match(/^\/deck\/([a-z0-9.\-]+)$/i);
+    if (deckMatch) {
+      const slug  = deckMatch[1];
+      const r2Key = `CardGames/${slug}/deck.json`;
+
+      /* GET /deck/:slug */
+      if (method === 'GET') {
+        try {
+          const obj = await env.CARD_GAMES_BUCKET.get(r2Key);
+          if (!obj) {
+            return respond(
+              JSON.stringify({ error: `Deck not found: ${slug}` }),
+              404, origin
+            );
+          }
+          const text = await obj.text();
+          return respond(text, 200, origin);
+        } catch (err) {
+          return respond(
+            JSON.stringify({ error: 'R2 read failed', detail: err.message }),
+            500, origin
+          );
+        }
+      }
+
+      /* PUT /deck/:slug */
+      if (method === 'PUT') {
+        try {
+          const body = await request.text();
+          JSON.parse(body); // validate JSON before storing
+          await env.CARD_GAMES_BUCKET.put(r2Key, body, {
+            httpMetadata: { contentType: 'application/json' },
+          });
+          return respond(
+            JSON.stringify({ ok: true, r2_key: r2Key }),
+            200, origin
+          );
+        } catch (err) {
+          const isJsonErr = err instanceof SyntaxError;
+          return respond(
+            JSON.stringify({
+              error:  isJsonErr ? 'Invalid JSON body' : 'R2 write failed',
+              detail: err.message,
+            }),
+            isJsonErr ? 400 : 500,
+            origin
+          );
+        }
+      }
+
+      /* DELETE /deck/:slug */
+      if (method === 'DELETE') {
+        try {
+          await env.CARD_GAMES_BUCKET.delete(r2Key);
+          return respond(
+            JSON.stringify({ ok: true, deleted: r2Key }),
+            200, origin
+          );
+        } catch (err) {
+          return respond(
+            JSON.stringify({ error: 'R2 delete failed', detail: err.message }),
+            500, origin
+          );
+        }
+      }
+
       return respond(
-        JSON.stringify({ error: 'Not found. Use /deck/:slug' }),
-        404, origin
+        JSON.stringify({ error: 'Method not allowed' }),
+        405, origin
       );
     }
 
-    const slug   = match[1];
-    const r2Key  = `CardGames/${slug}/deck.json`;
+    /* ── Route: /landing/:slug ──────────────────── */
+    /*
+      PUT /landing/:slug
+        Accepts a binary image or video file.
+        File extension is passed via the
+        X-File-Extension request header.
+        Stored at: CardGames/{slug}/landing.{ext}
+        Returns:   { ok, r2_key, public_url }
+    */
+    const landingMatch = url.pathname.match(/^\/landing\/([a-z0-9.\-]+)$/i);
+    if (landingMatch) {
+      const slug = landingMatch[1];
 
-    // ── GET ─────────────────────────────────────────
-    if (method === 'GET') {
-      try {
-        const obj = await env.CARD_GAMES_BUCKET.get(r2Key);
-        if (!obj) {
-          return respond(
-            JSON.stringify({ error: `Deck not found: ${slug}` }),
-            404, origin
-          );
-        }
-        const text = await obj.text();
-        return respond(text, 200, origin);
-      } catch (err) {
+      if (method !== 'PUT') {
         return respond(
-          JSON.stringify({ error: 'R2 read failed', detail: err.message }),
-          500, origin
+          JSON.stringify({ error: 'Only PUT is supported on /landing/:slug' }),
+          405, origin
         );
       }
-    }
 
-    // ── PUT ─────────────────────────────────────────
-    if (method === 'PUT') {
       try {
-        const body = await request.text();
+        // Get file extension from header (sent by admin)
+        const ext = (request.headers.get('X-File-Extension') || 'png')
+          .toLowerCase()
+          .replace(/^\./, ''); // strip leading dot if present
 
-        // Validate it is valid JSON before storing
-        JSON.parse(body);
+        const r2Key      = `CardGames/${slug}/landing.${ext}`;
+        const mimeType   = getMimeType(ext);
+        const publicUrl  = `https://files.3c-public-library.org/${r2Key}`;
 
-        await env.CARD_GAMES_BUCKET.put(r2Key, body, {
-          httpMetadata: { contentType: 'application/json' },
+        // Read binary body
+        const arrayBuffer = await request.arrayBuffer();
+
+        if (arrayBuffer.byteLength === 0) {
+          return respond(
+            JSON.stringify({ error: 'Empty file body' }),
+            400, origin
+          );
+        }
+
+        // Store binary in R2
+        await env.CARD_GAMES_BUCKET.put(r2Key, arrayBuffer, {
+          httpMetadata: { contentType: mimeType },
         });
 
         return respond(
-          JSON.stringify({ ok: true, r2_key: r2Key }),
-          200, origin
-        );
-      } catch (err) {
-        const isJson = err instanceof SyntaxError;
-        return respond(
           JSON.stringify({
-            error: isJson ? 'Invalid JSON body' : 'R2 write failed',
-            detail: err.message,
+            ok:         true,
+            r2_key:     r2Key,
+            public_url: publicUrl,
           }),
-          isJson ? 400 : 500,
-          origin
-        );
-      }
-    }
-
-    // ── DELETE ──────────────────────────────────────
-    if (method === 'DELETE') {
-      try {
-        await env.CARD_GAMES_BUCKET.delete(r2Key);
-        return respond(
-          JSON.stringify({ ok: true, deleted: r2Key }),
           200, origin
         );
+
       } catch (err) {
         return respond(
-          JSON.stringify({ error: 'R2 delete failed', detail: err.message }),
+          JSON.stringify({ error: 'Landing upload failed', detail: err.message }),
           500, origin
         );
       }
     }
 
-    // ── Method not allowed ───────────────────────────
+    /* ── No route matched ───────────────────────── */
     return respond(
-      JSON.stringify({ error: 'Method not allowed' }),
-      405, origin
+      JSON.stringify({
+        error: 'Not found',
+        routes: [
+          'GET    /deck/:slug',
+          'PUT    /deck/:slug',
+          'DELETE /deck/:slug',
+          'PUT    /landing/:slug',
+        ],
+      }),
+      404, origin
     );
   },
 };
