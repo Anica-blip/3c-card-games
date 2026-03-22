@@ -273,7 +273,7 @@ async function onSaveDeck() {
     deck_slug:  DECK_SLUG,
     title:      DECK_TITLE,
     deck_url:   generateDeckUrl(DECK_SLUG),
-    r2_key,
+    r2_key:     r2Key,
     card_count: deckData.cards.length
   });
 
