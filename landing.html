@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
   <title>Aurion's Lucky Wisdom Deck — 3C Thread To Success</title>
 
   <!-- Open Graph -->
@@ -24,13 +24,9 @@
   <link rel="icon" href="data:," />
 
   <style>
-    /* ── RESET ─────────────────────────────────── */
+    /* ── RESET ──────────────────────────────────── */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-    html, body {
-      width: 100%;
-      height: 100%;
-    }
+    html, body { width: 100%; height: 100%; }
 
     body {
       background: #1a0835;
@@ -42,14 +38,18 @@
       overflow: hidden;
     }
 
-    /* ── DEVICE CONTAINER ───────────────────────── */
-    /* Desktop: fixed portrait. Mobile: full screen */
+    /* ── 9:16 PORTRAIT CONTAINER ─────────────────
+       Identical sizing logic to public/index.html.
+       Desktop: fits in viewport, 9:16 enforced.
+       Mobile: fills full screen exactly.
+    ─────────────────────────────────────────────── */
     .device {
       position: relative;
-      width: 390px;
-      height: 844px;
+      width: min(390px, 56.25vh);
+      height: min(844px, 100vh);
+      aspect-ratio: 9 / 16;
       background: #3B1265;
-      border-radius: 28px;
+      border-radius: clamp(0px, 2vw, 28px);
       overflow: hidden;
       box-shadow:
         0 0 0 1.5px rgba(200,169,110,0.35),
@@ -66,14 +66,14 @@
         height: 100dvh;
         border-radius: 0;
         box-shadow: none;
+        aspect-ratio: unset;
       }
     }
 
-    /* ── MEDIA LAYER ────────────────────────────── */
-    /*
-      Landing image or video loaded dynamically from R2.
-      Falls back to a branded gradient if image not found.
-    */
+    /* ── MEDIA LAYER ─────────────────────────────
+       Image or video fills container exactly.
+       object-fit: cover — no gaps, no distortion.
+    ─────────────────────────────────────────────── */
     .media-wrap {
       position: absolute;
       inset: 0;
@@ -86,52 +86,63 @@
       height: 100%;
       object-fit: cover;
       display: block;
+      position: absolute;
+      inset: 0;
     }
 
-    /* Gradient overlay so button stays readable */
+    /* Gradient overlay — keeps ENTER button readable */
     .media-overlay {
       position: absolute;
       inset: 0;
       background: linear-gradient(
         to bottom,
-        rgba(30,5,60,0.10) 0%,
-        rgba(30,5,60,0.60) 100%
+        rgba(20,4,50,0.08) 0%,
+        rgba(20,4,50,0.58) 100%
       );
       z-index: 1;
     }
 
-    /* Fallback: shown when no image loads */
+    /* ── FALLBACK ─────────────────────────────────
+       Shown when no landing image exists in R2 yet.
+       Branded gradient with deck title.
+    ─────────────────────────────────────────────── */
     .media-fallback {
       position: absolute;
       inset: 0;
-      background: radial-gradient(ellipse at center, #5A2090 0%, #1a0835 100%);
+      z-index: 0;
+      background: radial-gradient(ellipse at 50% 40%, #5A2090 0%, #1a0835 100%);
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
       gap: 16px;
-      z-index: 0;
+      padding: 32px;
     }
 
-    .media-fallback .brand {
+    .fallback-brand {
       font-family: 'Cinzel', serif;
-      color: #C8A96E;
-      font-size: 0.85rem;
+      color: #00D4FF;
+      font-size: clamp(0.65rem, 1.8vw, 0.8rem);
       letter-spacing: 0.15em;
       text-align: center;
     }
 
-    .media-fallback .deck-name {
+    .fallback-title {
       font-family: 'Cinzel', serif;
       color: #fff;
-      font-size: 1.3rem;
+      font-size: clamp(1.1rem, 4vw, 1.4rem);
       font-weight: 700;
       text-align: center;
-      padding: 0 24px;
       line-height: 1.4;
     }
 
-    /* ── CONTENT (sits above overlay) ──────────── */
+    .fallback-divider {
+      width: 60%;
+      height: 1px;
+      background: rgba(200,169,110,0.4);
+    }
+
+    /* ── CONTENT LAYER (above overlay) ───────────── */
     .landing-content {
       position: absolute;
       inset: 0;
@@ -140,21 +151,21 @@
       flex-direction: column;
       align-items: center;
       justify-content: flex-end;
-      padding-bottom: 64px;
+      padding-bottom: 8%;
       width: 100%;
     }
 
-    /* ── ENTER BUTTON ───────────────────────────── */
+    /* ── ENTER BUTTON ────────────────────────────── */
     .btn-enter {
       font-family: 'Cinzel', serif;
-      font-size: 1.1rem;
+      font-size: clamp(0.85rem, 2.5vw, 1.05rem);
       font-weight: 700;
       letter-spacing: 0.2em;
       color: #3B1265;
       background: linear-gradient(135deg, #E2C98A, #C8A96E);
       border: none;
       border-radius: 50px;
-      padding: 16px 56px;
+      padding: 15px 54px;
       cursor: pointer;
       box-shadow: 0 4px 24px rgba(200,169,110,0.45);
       transition: transform 0.18s ease, box-shadow 0.18s ease;
@@ -167,8 +178,8 @@
 
     .btn-enter:active { transform: scale(0.97); }
 
-    /* ── LOADING STATE ──────────────────────────── */
-    #loadingMsg {
+    /* ── LOADING STATE ───────────────────────────── */
+    #loadingState {
       position: absolute;
       inset: 0;
       z-index: 10;
@@ -178,56 +189,69 @@
       justify-content: center;
       font-family: 'Cinzel', serif;
       color: #C8A96E;
-      font-size: 0.9rem;
-      letter-spacing: 0.1em;
+      font-size: clamp(0.75rem, 2vw, 0.9rem);
+      letter-spacing: 0.12em;
+      animation: pulse 1.8s ease-in-out infinite;
     }
 
-    /* ── ERROR STATE ────────────────────────────── */
-    #errorMsg {
+    /* ── ERROR STATE ─────────────────────────────── */
+    #errorState {
       display: none;
       position: absolute;
       inset: 0;
       z-index: 10;
       background: #1a0835;
+      flex-direction: column;
       align-items: center;
       justify-content: center;
-      flex-direction: column;
-      gap: 16px;
+      gap: 14px;
       padding: 32px;
       text-align: center;
-      font-family: 'Lato', sans-serif;
-      color: #fff;
     }
 
-    #errorMsg p { color: rgba(255,255,255,0.65); font-size: 0.9rem; }
+    #errorState strong {
+      font-family: 'Cinzel', serif;
+      color: #C8A96E;
+      font-size: clamp(0.85rem, 2.5vw, 1rem);
+    }
+
+    #errorState p {
+      color: rgba(255,255,255,0.6);
+      font-size: clamp(0.75rem, 2vw, 0.88rem);
+      line-height: 1.6;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 0.4; }
+      50%       { opacity: 1; }
+    }
   </style>
 </head>
 <body>
 
 <div class="device" id="device">
 
-  <!-- Loading state -->
-  <div id="loadingMsg">Loading…</div>
+  <!-- Loading -->
+  <div id="loadingState">Loading…</div>
 
-  <!-- Error state -->
-  <div id="errorMsg">
-    <strong style="color:#C8A96E; font-family:'Cinzel',serif;">Deck not found</strong>
-    <p>This deck link may be invalid or the deck has been removed.</p>
+  <!-- Error -->
+  <div id="errorState">
+    <strong>Deck not found</strong>
+    <p>This link may be invalid or the deck has been removed.</p>
   </div>
 
-  <!-- Fallback background (shown if no landing image in R2) -->
-  <div class="media-fallback" id="mediaFallback">
-    <span class="brand">3C Thread To Success</span>
-    <span class="deck-name" id="fallbackTitle">Aurion's Lucky Wisdom Deck</span>
+  <!-- Fallback branded background (when no R2 landing image yet) -->
+  <div class="media-fallback" id="mediaFallback" style="display:none;">
+    <span class="fallback-brand">3C Thread To Success</span>
+    <div class="fallback-divider"></div>
+    <span class="fallback-title" id="fallbackTitle">Aurion's Lucky Wisdom Deck</span>
   </div>
 
   <!-- Media layer: image or video from R2 -->
-  <div class="media-wrap" id="mediaWrap" style="display:none;">
-    <!-- Injected by JS: <img> or <video> depending on file type -->
-  </div>
+  <div class="media-wrap"    id="mediaWrap"    style="display:none;"></div>
   <div class="media-overlay" id="mediaOverlay" style="display:none;"></div>
 
-  <!-- Enter button -->
+  <!-- ENTER button -->
   <div class="landing-content" id="landingContent" style="display:none;">
     <button class="btn-enter" id="btnEnter">ENTER</button>
   </div>
@@ -235,82 +259,80 @@
 </div><!-- /device -->
 
 <script>
-  /* ══════════════════════════════════════════════
-     LANDING PAGE — 3C Card Games
-     ──────────────────────────────────────────────
-     1. Reads ?deck= slug from URL
-     2. Loads landing image/video from R2
-     3. ENTER button → public/index.html?deck={slug}
-  ══════════════════════════════════════════════ */
+/* ══════════════════════════════════════════════════
+   landing.html — 3C Card Games
+   ──────────────────────────────────────────────────
+   1. Reads ?deck= slug from URL
+   2. Fetches deck.json from R2 to get title
+   3. Loads landing image/video from R2 into container
+   4. ENTER → public/index.html?deck={slug}
+══════════════════════════════════════════════════ */
 
   const R2_PUBLIC  = 'https://files.3c-public-library.org/CardGames';
   const PUBLIC_APP = 'public/index.html';
 
-  /* ── Read deck slug from URL ────────────────── */
+  /* ── Helpers ────────────────────────────────── */
   function getDeckSlug() {
-    const params = new URLSearchParams(window.location.search);
-    return params.get('deck') || null;
+    return new URLSearchParams(window.location.search).get('deck');
   }
 
-  /* ── Detect if URL is a video ───────────────── */
-  function isVideoUrl(url) {
-    return /\.(mp4|webm|mov|ogg)$/i.test(url);
+  function isVideo(url) {
+    return /\.(mp4|webm|mov|ogg)$/i.test(url || '');
   }
 
-  /* ── Show error ─────────────────────────────── */
   function showError() {
-    document.getElementById('loadingMsg').style.display = 'none';
-    document.getElementById('errorMsg').style.display   = 'flex';
+    document.getElementById('loadingState').style.display = 'none';
+    document.getElementById('errorState').style.display   = 'flex';
   }
 
-  /* ── Show landing ───────────────────────────── */
-  function showLanding(slug, title) {
-    document.getElementById('loadingMsg').style.display = 'none';
+  /* ── Show landing ────────────────────────────── */
+  function showLanding(slug, deckJson) {
+    document.getElementById('loadingState').style.display = 'none';
 
-    const landingUrl = `${R2_PUBLIC}/${slug}/landing.png`;
+    const title       = (deckJson && deckJson.title) || '';
+    const landingUrl  = (deckJson && deckJson.landing)
+                          ? deckJson.landing
+                          : `${R2_PUBLIC}/${slug}/landing.png`;
 
-    // Try loading landing image
-    // Falls back to gradient if image not found
-    if (isVideoUrl(landingUrl)) {
-      // Video landing
-      const video = document.createElement('video');
-      video.autoplay  = true;
-      video.muted     = true;
-      video.loop      = true;
-      video.playsInline = true;
-      const source = document.createElement('source');
-      source.src  = landingUrl;
-      source.type = 'video/mp4';
-      video.appendChild(source);
-      document.getElementById('mediaWrap').appendChild(video);
+    /* ── Inject media ─────────────────────────── */
+    if (isVideo(landingUrl)) {
+      // Video
+      const v = document.createElement('video');
+      v.autoplay    = true;
+      v.muted       = true;
+      v.loop        = true;
+      v.playsInline = true;
+      const s = document.createElement('source');
+      s.src  = landingUrl;
+      s.type = 'video/mp4';
+      v.appendChild(s);
+      document.getElementById('mediaWrap').appendChild(v);
       document.getElementById('mediaWrap').style.display    = 'block';
       document.getElementById('mediaOverlay').style.display = 'block';
-      document.getElementById('mediaFallback').style.display = 'none';
+
     } else {
-      // Image landing
-      const img = new Image();
-      img.onload = () => {
+      // Image — try loading; fallback to gradient on error
+      const img    = new Image();
+      img.onload   = () => {
         document.getElementById('mediaWrap').appendChild(img);
         document.getElementById('mediaWrap').style.display    = 'block';
         document.getElementById('mediaOverlay').style.display = 'block';
-        document.getElementById('mediaFallback').style.display = 'none';
       };
-      img.onerror = () => {
-        // No landing image in R2 — fallback gradient shows
-        if (title) {
-          const el = document.getElementById('fallbackTitle');
-          if (el) el.textContent = title;
-        }
+      img.onerror  = () => {
+        // No landing image in R2 yet — show branded fallback
+        const fallbackTitle = document.getElementById('fallbackTitle');
+        if (fallbackTitle && title) fallbackTitle.textContent = title;
         document.getElementById('mediaFallback').style.display = 'flex';
+        document.getElementById('mediaOverlay').style.display  = 'block';
       };
       img.src = landingUrl;
       img.alt = title || 'Landing';
     }
 
-    // Show enter button
-    document.getElementById('landingContent').style.display = 'flex';
+    /* ── Show ENTER button ───────────────────── */
+    const contentEl = document.getElementById('landingContent');
+    contentEl.style.display = 'flex';
 
-    // Wire ENTER button
     document.getElementById('btnEnter').onclick = () => {
       window.location.href = `${PUBLIC_APP}?deck=${encodeURIComponent(slug)}`;
     };
@@ -325,22 +347,17 @@
       return;
     }
 
-    // Show landing with the slug
-    // Title loaded from deck JSON if available
-    const deckJsonUrl = `${R2_PUBLIC}/${slug}/deck.json`;
-
-    fetch(deckJsonUrl)
+    // Fetch deck JSON to get title + correct landing URL
+    fetch(`${R2_PUBLIC}/${slug}/deck.json`)
       .then(r => {
-        if (!r.ok) throw new Error('Deck not found');
+        if (!r.ok) throw new Error('Not found');
         return r.json();
       })
-      .then(data => {
-        showLanding(slug, data.title || '');
-      })
-      .catch(() => {
-        // If JSON fetch fails, still show landing with slug
-        // (image may still exist even if JSON fetch has CORS issue)
-        showLanding(slug, '');
+      .then(data  => showLanding(slug, data))
+      .catch(()   => {
+        // JSON not found — still show landing with slug-based URL
+        // (deck may not be saved yet but image may exist)
+        showLanding(slug, null);
       });
   })();
 </script>
