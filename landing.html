@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Aurion's Lucky Wisdom Deck — 3C Thread To Success</title>
+
+  <!-- Open Graph -->
+  <meta property="og:title"       content="Aurion's Lucky Wisdom Deck" />
+  <meta property="og:description" content="Pick a card. Receive your wisdom. A lucky message is waiting for you." />
+  <meta property="og:image"       content="https://files.3c-public-library.org/CardGames/og-preview.png" />
+  <meta property="og:type"        content="website" />
+  <meta property="og:site_name"   content="3C Thread To Success" />
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card"        content="summary_large_image" />
+  <meta name="twitter:title"       content="Aurion's Lucky Wisdom Deck" />
+  <meta name="twitter:description" content="Pick a card. Receive your wisdom." />
+  <meta name="twitter:image"       content="https://files.3c-public-library.org/CardGames/og-preview.png" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Lato:wght@300;400;700&display=swap" rel="stylesheet" />
+  <link rel="icon" href="data:," />
+
+  <style>
+    /* ── RESET ─────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+    }
+
+    body {
+      background: #1a0835;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Lato', sans-serif;
+      overflow: hidden;
+    }
+
+    /* ── DEVICE CONTAINER ───────────────────────── */
+    /* Desktop: fixed portrait. Mobile: full screen */
+    .device {
+      position: relative;
+      width: 390px;
+      height: 844px;
+      background: #3B1265;
+      border-radius: 28px;
+      overflow: hidden;
+      box-shadow:
+        0 0 0 1.5px rgba(200,169,110,0.35),
+        0 30px 80px rgba(0,0,0,0.6);
+    }
+
+    @media (max-width: 480px) {
+      body {
+        align-items: flex-start;
+        background: #3B1265;
+      }
+      .device {
+        width: 100vw;
+        height: 100dvh;
+        border-radius: 0;
+        box-shadow: none;
+      }
+    }
+
+    /* ── MEDIA LAYER ────────────────────────────── */
+    /*
+      Landing image or video loaded dynamically from R2.
+      Falls back to a branded gradient if image not found.
+    */
+    .media-wrap {
+      position: absolute;
+      inset: 0;
+      z-index: 0;
+    }
+
+    .media-wrap img,
+    .media-wrap video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    /* Gradient overlay so button stays readable */
+    .media-overlay {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(
+        to bottom,
+        rgba(30,5,60,0.10) 0%,
+        rgba(30,5,60,0.60) 100%
+      );
+      z-index: 1;
+    }
+
+    /* Fallback: shown when no image loads */
+    .media-fallback {
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse at center, #5A2090 0%, #1a0835 100%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      z-index: 0;
+    }
+
+    .media-fallback .brand {
+      font-family: 'Cinzel', serif;
+      color: #C8A96E;
+      font-size: 0.85rem;
+      letter-spacing: 0.15em;
+      text-align: center;
+    }
+
+    .media-fallback .deck-name {
+      font-family: 'Cinzel', serif;
+      color: #fff;
+      font-size: 1.3rem;
+      font-weight: 700;
+      text-align: center;
+      padding: 0 24px;
+      line-height: 1.4;
+    }
+
+    /* ── CONTENT (sits above overlay) ──────────── */
+    .landing-content {
+      position: absolute;
+      inset: 0;
+      z-index: 2;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-end;
+      padding-bottom: 64px;
+      width: 100%;
+    }
+
+    /* ── ENTER BUTTON ───────────────────────────── */
+    .btn-enter {
+      font-family: 'Cinzel', serif;
+      font-size: 1.1rem;
+      font-weight: 700;
+      letter-spacing: 0.2em;
+      color: #3B1265;
+      background: linear-gradient(135deg, #E2C98A, #C8A96E);
+      border: none;
+      border-radius: 50px;
+      padding: 16px 56px;
+      cursor: pointer;
+      box-shadow: 0 4px 24px rgba(200,169,110,0.45);
+      transition: transform 0.18s ease, box-shadow 0.18s ease;
+    }
+
+    .btn-enter:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 32px rgba(200,169,110,0.6);
+    }
+
+    .btn-enter:active { transform: scale(0.97); }
+
+    /* ── LOADING STATE ──────────────────────────── */
+    #loadingMsg {
+      position: absolute;
+      inset: 0;
+      z-index: 10;
+      background: #1a0835;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Cinzel', serif;
+      color: #C8A96E;
+      font-size: 0.9rem;
+      letter-spacing: 0.1em;
+    }
+
+    /* ── ERROR STATE ────────────────────────────── */
+    #errorMsg {
+      display: none;
+      position: absolute;
+      inset: 0;
+      z-index: 10;
+      background: #1a0835;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: 16px;
+      padding: 32px;
+      text-align: center;
+      font-family: 'Lato', sans-serif;
+      color: #fff;
+    }
+
+    #errorMsg p { color: rgba(255,255,255,0.65); font-size: 0.9rem; }
+  </style>
+</head>
+<body>
+
+<div class="device" id="device">
+
+  <!-- Loading state -->
+  <div id="loadingMsg">Loading…</div>
+
+  <!-- Error state -->
+  <div id="errorMsg">
+    <strong style="color:#C8A96E; font-family:'Cinzel',serif;">Deck not found</strong>
+    <p>This deck link may be invalid or the deck has been removed.</p>
+  </div>
+
+  <!-- Fallback background (shown if no landing image in R2) -->
+  <div class="media-fallback" id="mediaFallback">
+    <span class="brand">3C Thread To Success</span>
+    <span class="deck-name" id="fallbackTitle">Aurion's Lucky Wisdom Deck</span>
+  </div>
+
+  <!-- Media layer: image or video from R2 -->
+  <div class="media-wrap" id="mediaWrap" style="display:none;">
+    <!-- Injected by JS: <img> or <video> depending on file type -->
+  </div>
+  <div class="media-overlay" id="mediaOverlay" style="display:none;"></div>
+
+  <!-- Enter button -->
+  <div class="landing-content" id="landingContent" style="display:none;">
+    <button class="btn-enter" id="btnEnter">ENTER</button>
+  </div>
+
+</div><!-- /device -->
+
+<script>
+  /* ══════════════════════════════════════════════
+     LANDING PAGE — 3C Card Games
+     ──────────────────────────────────────────────
+     1. Reads ?deck= slug from URL
+     2. Loads landing image/video from R2
+     3. ENTER button → public/index.html?deck={slug}
+  ══════════════════════════════════════════════ */
+
+  const R2_PUBLIC  = 'https://files.3c-public-library.org/CardGames';
+  const PUBLIC_APP = 'public/index.html';
+
+  /* ── Read deck slug from URL ────────────────── */
+  function getDeckSlug() {
+    const params = new URLSearchParams(window.location.search);
+    return params.get('deck') || null;
+  }
+
+  /* ── Detect if URL is a video ───────────────── */
+  function isVideoUrl(url) {
+    return /\.(mp4|webm|mov|ogg)$/i.test(url);
+  }
+
+  /* ── Show error ─────────────────────────────── */
+  function showError() {
+    document.getElementById('loadingMsg').style.display = 'none';
+    document.getElementById('errorMsg').style.display   = 'flex';
+  }
+
+  /* ── Show landing ───────────────────────────── */
+  function showLanding(slug, title) {
+    document.getElementById('loadingMsg').style.display = 'none';
+
+    const landingUrl = `${R2_PUBLIC}/${slug}/landing.png`;
+
+    // Try loading landing image
+    // Falls back to gradient if image not found
+    if (isVideoUrl(landingUrl)) {
+      // Video landing
+      const video = document.createElement('video');
+      video.autoplay  = true;
+      video.muted     = true;
+      video.loop      = true;
+      video.playsInline = true;
+      const source = document.createElement('source');
+      source.src  = landingUrl;
+      source.type = 'video/mp4';
+      video.appendChild(source);
+      document.getElementById('mediaWrap').appendChild(video);
+      document.getElementById('mediaWrap').style.display    = 'block';
+      document.getElementById('mediaOverlay').style.display = 'block';
+      document.getElementById('mediaFallback').style.display = 'none';
+    } else {
+      // Image landing
+      const img = new Image();
+      img.onload = () => {
+        document.getElementById('mediaWrap').appendChild(img);
+        document.getElementById('mediaWrap').style.display    = 'block';
+        document.getElementById('mediaOverlay').style.display = 'block';
+        document.getElementById('mediaFallback').style.display = 'none';
+      };
+      img.onerror = () => {
+        // No landing image in R2 — fallback gradient shows
+        if (title) {
+          const el = document.getElementById('fallbackTitle');
+          if (el) el.textContent = title;
+        }
+        document.getElementById('mediaFallback').style.display = 'flex';
+      };
+      img.src = landingUrl;
+      img.alt = title || 'Landing';
+    }
+
+    // Show enter button
+    document.getElementById('landingContent').style.display = 'flex';
+
+    // Wire ENTER button
+    document.getElementById('btnEnter').onclick = () => {
+      window.location.href = `${PUBLIC_APP}?deck=${encodeURIComponent(slug)}`;
+    };
+  }
+
+  /* ── INIT ───────────────────────────────────── */
+  (function init() {
+    const slug = getDeckSlug();
+
+    if (!slug) {
+      showError();
+      return;
+    }
+
+    // Show landing with the slug
+    // Title loaded from deck JSON if available
+    const deckJsonUrl = `${R2_PUBLIC}/${slug}/deck.json`;
+
+    fetch(deckJsonUrl)
+      .then(r => {
+        if (!r.ok) throw new Error('Deck not found');
+        return r.json();
+      })
+      .then(data => {
+        showLanding(slug, data.title || '');
+      })
+      .catch(() => {
+        // If JSON fetch fails, still show landing with slug
+        // (image may still exist even if JSON fetch has CORS issue)
+        showLanding(slug, '');
+      });
+  })();
+</script>
+
+</body>
+</html>
