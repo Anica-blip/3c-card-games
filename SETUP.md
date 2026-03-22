@@ -159,24 +159,25 @@ CardGames/{slug}/deck.json
     ├── logo.png                        ← Shared 3C logo (pick screen)
     ├── og-preview.png                  ← Open Graph social share image
     └── deck.01/
-        ├── deck.json                   ← Written by worker on Save Deck
-        ├── landing.png                 ← Written by worker via landing-upload.html
-        ├── intro.png                   ← Uploaded from computer, previewed in admin
-        ├── finale.png                  ← Uploaded from computer, previewed in admin
-        ├── card-01-front.png           ← Uploaded from computer, previewed in admin
-        ├── card-01-back.png
-        ├── card-02-front.png
-        ├── card-02-back.png
+        ├── deck.json                   ← Saved by worker on Save Deck
+        ├── landing.{ext}               ← Saved by worker via landing-upload.html
+        ├── intro.{ext}                 ← URL stored in deck.json (loaded from computer in admin)
+        ├── finale.{ext}                ← URL stored in deck.json (loaded from computer in admin)
+        ├── card-01-front.{ext}         ← URL stored in deck.json (loaded from computer in admin)
+        ├── card-01-back.{ext}
+        ├── card-02-front.{ext}
+        ├── card-02-back.{ext}
         └── ...
 ```
 
-**Important:**
-- `deck.json` and `landing.{ext}` are written by the Worker
-- All other media files (intro, finale, card images) are uploaded from
-  the admin computer for local preview — their filenames are
-  auto-constructed and stored as R2 URLs inside the JSON
-- File naming must match exactly — the public app constructs URLs
-  from the JSON, not from file discovery
+**How media gets into R2 — the correct flow:**
+- All media (intro, finale, card front, card back) is loaded from
+  **Chef's computer** in the admin panel for local preview only
+- On **Save Deck** → filenames are auto-constructed into R2 public URLs
+  and stored inside the ONE deck JSON file → pushed to R2 via worker
+- **Landing image/video** is the only file sent directly to R2 —
+  uploaded from computer in `landing-upload.html` → worker stores it
+- The public app reads all URLs from the JSON — it never discovers files
 
 ---
 
