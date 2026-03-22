@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>3C Card Games — Landing Upload</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Lato:wght@300;400;700&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: #f9f9f9;
+      font-family: 'Lato', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding: 40px 16px;
+    }
+
+    .panel {
+      background: #fff;
+      border-radius: 14px;
+      box-shadow: 0 3px 30px rgba(0,0,0,0.08);
+      padding: 36px 40px 48px;
+      width: 100%;
+      max-width: 600px;
+    }
+
+    /* ── HEADER ──────────────────────────────── */
+    .panel-header {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 32px;
+      border-bottom: 2px solid #eaf4fc;
+      padding-bottom: 18px;
+    }
+
+    .panel-header h1 {
+      font-family: 'Cinzel', serif;
+      font-size: 1.2rem;
+      color: #3B1265;
+      font-weight: 700;
+    }
+
+    .panel-header a {
+      margin-left: auto;
+      font-size: 0.85rem;
+      color: #4682b4;
+      text-decoration: none;
+    }
+
+    .panel-header a:hover { text-decoration: underline; }
+
+    /* ── FORM FIELDS ─────────────────────────── */
+    .field {
+      margin-bottom: 22px;
+    }
+
+    .field label {
+      display: block;
+      font-weight: 700;
+      font-size: 0.92rem;
+      color: #333;
+      margin-bottom: 7px;
+    }
+
+    .field-hint {
+      display: block;
+      font-size: 0.8rem;
+      color: #888;
+      margin-top: 4px;
+      line-height: 1.5;
+    }
+
+    select, input[type="text"] {
+      width: 100%;
+      padding: 9px 12px;
+      font-size: 0.95rem;
+      border: 1.5px solid #ccc;
+      border-radius: 7px;
+      background: #fff;
+      color: #333;
+      direction: ltr;
+      appearance: none;
+    }
+
+    select:focus, input[type="text"]:focus {
+      outline: none;
+      border-color: #4682b4;
+      box-shadow: 0 0 0 2px rgba(70,130,180,0.15);
+    }
+
+    /* ── UPLOAD AREA ─────────────────────────── */
+    .upload-area {
+      border: 2px dashed #ccc;
+      border-radius: 10px;
+      padding: 32px 20px;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s;
+      background: #fafafa;
+      position: relative;
+    }
+
+    .upload-area:hover,
+    .upload-area.dragover {
+      border-color: #4682b4;
+      background: #f0f7ff;
+    }
+
+    .upload-area input[type="file"] {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      cursor: pointer;
+      width: 100%;
+      height: 100%;
+    }
+
+    .upload-icon { font-size: 2.2rem; margin-bottom: 10px; }
+
+    .upload-area p {
+      font-size: 0.9rem;
+      color: #666;
+      line-height: 1.5;
+    }
+
+    .upload-area .chosen-file {
+      margin-top: 10px;
+      font-size: 0.88rem;
+      font-weight: 700;
+      color: #3B1265;
+    }
+
+    /* ── PREVIEW ─────────────────────────────── */
+    #previewWrap {
+      display: none;
+      margin-top: 18px;
+      border-radius: 10px;
+      overflow: hidden;
+      /* 9:16 ratio preview */
+      position: relative;
+      width: 100%;
+      max-width: 220px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    #previewWrap::before {
+      content: '';
+      display: block;
+      padding-top: 177.78%; /* 16/9 */
+    }
+
+    #previewWrap img,
+    #previewWrap video {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border-radius: 10px;
+      display: block;
+    }
+
+    /* ── UPLOAD BUTTON ───────────────────────── */
+    #btnUpload {
+      width: 100%;
+      padding: 14px;
+      background: linear-gradient(135deg, #5A2090, #3B1265);
+      color: #E2C98A;
+      font-family: 'Cinzel', serif;
+      font-size: 1rem;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      margin-top: 24px;
+      transition: opacity 0.18s;
+    }
+
+    #btnUpload:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+
+    #btnUpload:hover:not(:disabled) { opacity: 0.88; }
+
+    /* ── STATUS ──────────────────────────────── */
+    #statusMsg {
+      margin-top: 18px;
+      padding: 12px 16px;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      display: none;
+      line-height: 1.5;
+    }
+
+    #statusMsg.success {
+      background: #e8f9ee;
+      border: 1.5px solid #4caf50;
+      color: #1b5e20;
+      display: block;
+    }
+
+    #statusMsg.error {
+      background: #fdecea;
+      border: 1.5px solid #e53935;
+      color: #b71c1c;
+      display: block;
+    }
+
+    #statusMsg.loading {
+      background: #f3f8ff;
+      border: 1.5px solid #4682b4;
+      color: #1a237e;
+      display: block;
+    }
+
+    /* ── PROGRESS BAR ────────────────────────── */
+    #progressWrap {
+      display: none;
+      margin-top: 14px;
+      background: #eee;
+      border-radius: 50px;
+      height: 8px;
+      overflow: hidden;
+    }
+
+    #progressBar {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #5A2090, #00D4FF);
+      border-radius: 50px;
+      transition: width 0.3s ease;
+    }
+
+    /* ── RESULT URL ──────────────────────────── */
+    #resultBlock {
+      display: none;
+      margin-top: 18px;
+      padding: 14px 16px;
+      background: #f3f8ff;
+      border: 1.5px solid #4682b4;
+      border-radius: 8px;
+    }
+
+    #resultBlock label {
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: #333;
+      display: block;
+      margin-bottom: 6px;
+    }
+
+    #resultBlock .url-row {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    #resultUrl {
+      flex: 1;
+      padding: 6px 8px;
+      font-size: 0.82rem;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      background: #fff;
+      color: #333;
+      direction: ltr;
+    }
+
+    #btnCopyUrl {
+      padding: 6px 14px;
+      font-size: 0.82rem;
+      background: #4682b4;
+      color: #fff;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    #btnCopyUrl:hover { background: #2c5f8a; }
+
+    #copiedMsg {
+      font-size: 0.8rem;
+      color: green;
+      display: none;
+      margin-top: 4px;
+    }
+
+    @media (max-width: 500px) {
+      .panel { padding: 24px 16px 36px; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="panel">
+
+  <!-- Header -->
+  <div class="panel-header">
+    <h1>🃏 Landing Upload</h1>
+    <a href="index.html">← Back to Admin</a>
+  </div>
+
+  <!-- Step 1: Pick deck -->
+  <div class="field">
+    <label for="deckSelect">Select Deck</label>
+    <select id="deckSelect">
+      <option value="">Loading decks…</option>
+    </select>
+    <span class="field-hint">
+      Only saved decks appear here. Save your deck in the admin first,
+      then come back to upload the landing media.
+    </span>
+  </div>
+
+  <!-- Step 2: Upload file -->
+  <div class="field">
+    <label>Landing Image or Video</label>
+    <div
+      class="upload-area"
+      id="uploadArea"
+      ondragover="handleDragOver(event)"
+      ondragleave="handleDragLeave(event)"
+      ondrop="handleDrop(event)"
+    >
+      <input
+        type="file"
+        id="fileInput"
+        accept="image/*,video/*"
+        onchange="handleFileSelect(this)"
+      />
+      <div class="upload-icon">📁</div>
+      <p>
+        Click to choose or drag &amp; drop<br>
+        <strong>Image or Video</strong> (PNG, JPG, MP4, WEBM…)
+      </p>
+      <div class="chosen-file" id="chosenFileName"></div>
+    </div>
+    <span class="field-hint">
+      This is the first screen users see when they open your shared deck link.
+      Each deck has its own landing media stored separately in Cloudflare R2.
+    </span>
+  </div>
+
+  <!-- Preview -->
+  <div id="previewWrap"></div>
+
+  <!-- Progress -->
+  <div id="progressWrap">
+    <div id="progressBar"></div>
+  </div>
+
+  <!-- Status -->
+  <div id="statusMsg"></div>
+
+  <!-- Result URL -->
+  <div id="resultBlock">
+    <label>Saved to Cloudflare R2 — public URL:</label>
+    <div class="url-row">
+      <input type="text" id="resultUrl" readonly />
+      <button id="btnCopyUrl" onclick="copyUrl()">Copy</button>
+    </div>
+    <div id="copiedMsg">Copied!</div>
+  </div>
+
+  <!-- Upload button -->
+  <button id="btnUpload" disabled onclick="uploadLanding()">
+    UPLOAD TO CLOUDFLARE
+  </button>
+
+</div><!-- /panel -->
+
+<script type="module">
+  import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+
+  /* ── CONFIG ───────────────────────────────────── */
+  const SUPABASE_URL = 'https://cgxjqsbrditbteqhdyus.supabase.co';
+  const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNneGpxc2JyZGl0YnRlcWhkeXVzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTExMTY1ODEsImV4cCI6MjA2NjY5MjU4MX0.xUDy5ic-r52kmRtocdcW8Np9-lczjMZ6YKPXc03rIG4';
+  const WORKER_URL   = 'https://3c-card-games.3c-innertherapy.workers.dev';
+
+  const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+  let selectedFile = null;
+
+  /* ── Load deck list from Supabase ─────────────── */
+  async function loadDecks() {
+    const select = document.getElementById('deckSelect');
+    const { data, error } = await supabase
+      .from('card_decks')
+      .select('deck_slug, title')
+      .order('id', { ascending: true });
+
+    if (error || !data || !data.length) {
+      select.innerHTML = '<option value="">No saved decks found — save a deck first</option>';
+      return;
+    }
+
+    select.innerHTML = '<option value="">— Choose a deck —</option>' +
+      data.map(d =>
+        `<option value="${d.deck_slug}">${d.deck_slug} — ${d.title || 'Untitled'}</option>`
+      ).join('');
+  }
+
+  /* ── File select handler ──────────────────────── */
+  window.handleFileSelect = function(input) {
+    const file = input.files[0];
+    if (!file) return;
+    setFile(file);
+  };
+
+  /* ── Drag and drop ────────────────────────────── */
+  window.handleDragOver = function(e) {
+    e.preventDefault();
+    document.getElementById('uploadArea').classList.add('dragover');
+  };
+
+  window.handleDragLeave = function(e) {
+    document.getElementById('uploadArea').classList.remove('dragover');
+  };
+
+  window.handleDrop = function(e) {
+    e.preventDefault();
+    document.getElementById('uploadArea').classList.remove('dragover');
+    const file = e.dataTransfer.files[0];
+    if (!file) return;
+    setFile(file);
+  };
+
+  function setFile(file) {
+    selectedFile = file;
+    document.getElementById('chosenFileName').textContent = file.name;
+
+    // Preview
+    const wrap = document.getElementById('previewWrap');
+    wrap.innerHTML = '';
+    wrap.style.display = 'block';
+
+    const localUrl = URL.createObjectURL(file);
+
+    if (file.type.startsWith('video/')) {
+      const v = document.createElement('video');
+      v.src       = localUrl;
+      v.autoplay  = true;
+      v.muted     = true;
+      v.loop      = true;
+      v.playsInline = true;
+      v.controls  = false;
+      wrap.appendChild(v);
+    } else {
+      const img = document.createElement('img');
+      img.src = localUrl;
+      img.alt = 'Preview';
+      wrap.appendChild(img);
+    }
+
+    // Enable upload button if deck also selected
+    checkReady();
+  }
+
+  /* ── Deck select change ───────────────────────── */
+  document.getElementById('deckSelect').addEventListener('change', checkReady);
+
+  function checkReady() {
+    const slug = document.getElementById('deckSelect').value;
+    document.getElementById('btnUpload').disabled = !(slug && selectedFile);
+  }
+
+  /* ── Upload to Cloudflare via worker ──────────── */
+  window.uploadLanding = async function() {
+    const slug = document.getElementById('deckSelect').value;
+    if (!slug || !selectedFile) return;
+
+    // Get file extension
+    const ext = selectedFile.name.split('.').pop().toLowerCase();
+
+    setStatus('loading', '⏳ Uploading to Cloudflare R2…');
+    showProgress(true);
+    document.getElementById('btnUpload').disabled = true;
+    document.getElementById('resultBlock').style.display = 'none';
+
+    try {
+      // Simulate progress (XHR would give real progress;
+      // fetch doesn't expose upload progress natively)
+      animateProgress(0, 60, 800);
+
+      const response = await fetch(`${WORKER_URL}/landing/${slug}`, {
+        method:  'PUT',
+        headers: {
+          'Content-Type':      selectedFile.type || 'application/octet-stream',
+          'X-File-Extension':  ext,
+        },
+        body: selectedFile,
+      });
+
+      animateProgress(60, 100, 400);
+
+      if (!response.ok) {
+        const err = await response.json().catch(() => ({}));
+        throw new Error(err.error || `Worker error ${response.status}`);
+      }
+
+      const result = await response.json();
+
+      setTimeout(() => {
+        showProgress(false);
+        setStatus('success',
+          `✅ Uploaded successfully!\n` +
+          `Stored at: ${result.r2_key}`
+        );
+
+        // Show public URL
+        document.getElementById('resultUrl').value   = result.public_url;
+        document.getElementById('resultBlock').style.display = 'block';
+
+        document.getElementById('btnUpload').disabled = false;
+      }, 450);
+
+    } catch (err) {
+      showProgress(false);
+      setStatus('error', '❌ Upload failed: ' + err.message);
+      document.getElementById('btnUpload').disabled = false;
+    }
+  };
+
+  /* ── Copy URL ─────────────────────────────────── */
+  window.copyUrl = function() {
+    const urlEl = document.getElementById('resultUrl');
+    urlEl.select();
+    document.execCommand('copy');
+    const msg = document.getElementById('copiedMsg');
+    msg.style.display = 'block';
+    setTimeout(() => { msg.style.display = 'none'; }, 1200);
+  };
+
+  /* ── Helpers ──────────────────────────────────── */
+  function setStatus(type, msg) {
+    const el = document.getElementById('statusMsg');
+    el.className  = type;
+    el.textContent = msg;
+  }
+
+  function showProgress(show) {
+    document.getElementById('progressWrap').style.display = show ? 'block' : 'none';
+    if (!show) document.getElementById('progressBar').style.width = '0%';
+  }
+
+  function animateProgress(from, to, duration) {
+    const bar   = document.getElementById('progressBar');
+    const steps = 20;
+    const step  = (to - from) / steps;
+    const delay = duration / steps;
+    let current = from;
+    const interval = setInterval(() => {
+      current += step;
+      bar.style.width = Math.min(current, to) + '%';
+      if (current >= to) clearInterval(interval);
+    }, delay);
+  }
+
+  /* ── Init ─────────────────────────────────────── */
+  loadDecks();
+</script>
+
+</body>
+</html>
