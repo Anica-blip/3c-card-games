@@ -478,58 +478,85 @@
   }
 
   /* ── Upload to Cloudflare via worker ──────────── */
+  /*
+    Two steps:
+    1. PUT /landing/:slug  → stores binary file in R2
+                           → worker returns { public_url } with correct extension
+    2. GET /deck/:slug     → fetch existing deck JSON
+       PATCH landing field → set to public_url (correct extension, .png OR .mp4 etc.)
+       PUT /deck/:slug     → save updated JSON back to R2
+  */
   window.uploadLanding = async function() {
     const slug = document.getElementById('deckSelect').value;
     if (!slug || !selectedFile) return;
 
-    // Get file extension
     const ext = selectedFile.name.split('.').pop().toLowerCase();
 
-    setStatus('loading', '⏳ Uploading to Cloudflare R2…');
+    setStatus('loading', '⏳ Step 1 of 2 — Uploading landing media to R2…');
     showProgress(true);
     document.getElementById('btnUpload').disabled = true;
     document.getElementById('resultBlock').style.display = 'none';
 
     try {
-      // Simulate progress (XHR would give real progress;
-      // fetch doesn't expose upload progress natively)
-      animateProgress(0, 60, 800);
+      // ── Step 1: Upload binary file ─────────────
+      animateProgress(0, 50, 800);
 
-      const response = await fetch(`${WORKER_URL}/landing/${slug}`, {
+      const uploadRes = await fetch(`${WORKER_URL}/landing/${slug}`, {
         method:  'PUT',
         headers: {
-          'Content-Type':      selectedFile.type || 'application/octet-stream',
-          'X-File-Extension':  ext,
+          'Content-Type':     selectedFile.type || 'application/octet-stream',
+          'X-File-Extension': ext,
         },
         body: selectedFile,
       });
 
-      animateProgress(60, 100, 400);
-
-      if (!response.ok) {
-        const err = await response.json().catch(() => ({}));
-        throw new Error(err.error || `Worker error ${response.status}`);
+      if (!uploadRes.ok) {
+        const err = await uploadRes.json().catch(() => ({}));
+        throw new Error(err.error || `Upload error ${uploadRes.status}`);
       }
 
-      const result = await response.json();
+      const uploadResult = await uploadRes.json();
+      const publicUrl    = uploadResult.public_url;
+
+      // ── Step 2: Patch landing URL into deck JSON ─
+      setStatus('loading', '⏳ Step 2 of 2 — Updating deck JSON with landing URL…');
+      animateProgress(50, 80, 400);
+
+      // Fetch existing deck JSON
+      const getRes = await fetch(`${WORKER_URL}/deck/${slug}`);
+      if (!getRes.ok) throw new Error(`Could not fetch deck JSON (${getRes.status})`);
+      const deckJson = await getRes.json();
+
+      // Patch the landing field with correct URL + extension
+      deckJson.landing = publicUrl;
+
+      // Save updated JSON back to R2
+      const saveRes = await fetch(`${WORKER_URL}/deck/${slug}`, {
+        method:  'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify(deckJson, null, 2),
+      });
+
+      if (!saveRes.ok) throw new Error(`Deck JSON update failed (${saveRes.status})`);
+
+      animateProgress(80, 100, 300);
 
       setTimeout(() => {
         showProgress(false);
         setStatus('success',
-          `✅ Uploaded successfully!\n` +
-          `Stored at: ${result.r2_key}`
+          `✅ Done!\n` +
+          `Landing media saved + deck JSON updated.\n` +
+          `File: ${uploadResult.r2_key}`
         );
 
-        // Show public URL
-        document.getElementById('resultUrl').value   = result.public_url;
+        document.getElementById('resultUrl').value        = publicUrl;
         document.getElementById('resultBlock').style.display = 'block';
-
-        document.getElementById('btnUpload').disabled = false;
-      }, 450);
+        document.getElementById('btnUpload').disabled      = false;
+      }, 350);
 
     } catch (err) {
       showProgress(false);
-      setStatus('error', '❌ Upload failed: ' + err.message);
+      setStatus('error', '❌ ' + err.message);
       document.getElementById('btnUpload').disabled = false;
     }
   };
