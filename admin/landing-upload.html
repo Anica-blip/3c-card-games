@@ -383,26 +383,19 @@
 </div><!-- /panel -->
 
 <script type="module">
-  import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+  import { fetchAllDecks } from './supabaseAPI.js';
 
   /* ── CONFIG ───────────────────────────────────── */
-  const SUPABASE_URL = 'https://cgxjqsbrditbteqhdyus.supabase.co';
-  const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNneGpxc2JyZGl0YnRlcWhkeXVzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTExMTY1ODEsImV4cCI6MjA2NjY5MjU4MX0.xUDy5ic-r52kmRtocdcW8Np9-lczjMZ6YKPXc03rIG4';
-  const WORKER_URL   = 'https://3c-card-games.3c-innertherapy.workers.dev';
-
-  const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+  const WORKER_URL = 'https://3c-card-games.3c-innertherapy.workers.dev';
 
   let selectedFile = null;
 
   /* ── Load deck list from Supabase ─────────────── */
   async function loadDecks() {
     const select = document.getElementById('deckSelect');
-    const { data, error } = await supabase
-      .from('card_decks')
-      .select('deck_slug, title')
-      .order('id', { ascending: true });
+    const data   = await fetchAllDecks();
 
-    if (error || !data || !data.length) {
+    if (!data || !data.length) {
       select.innerHTML = '<option value="">No saved decks found — save a deck first</option>';
       return;
     }
