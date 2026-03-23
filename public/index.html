@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
-  <title>Aurion's Lucky Wisdom Deck</title>
+  <title>3C Card Deck</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Open+Sans:wght@400;600;700&display=swap" rel="stylesheet" />
@@ -44,14 +44,13 @@
         0 30px 80px rgba(0,0,0,0.7);
     }
 
+    /* Mobile: Keep 9:16 container with borders visible */
     @media (max-width: 480px) {
-      body { align-items: flex-start; background: #1a0835; }
       .device {
         width: 100vw;
-        height: 100dvh;
-        border-radius: 0;
-        box-shadow: none;
-        aspect-ratio: unset;
+        height: auto;
+        max-height: 100vh;
+        aspect-ratio: 9 / 16;
       }
     }
 
@@ -205,15 +204,21 @@
     ══════════════════════════════════════════════════ */
     #screen-pick {
       background: #1a0a2e;
-      justify-content: flex-start;
+      justify-content: space-between;
       padding: 0 6% 3%;
       gap: 0;
       align-items: center;
     }
 
+    .pick-header {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-top: 5%;
+    }
+
     .pick-logo {
       width: clamp(32px, 8%, 44px);
-      margin-top: 5%;
       margin-bottom: 2%;
     }
 
@@ -264,8 +269,8 @@
     .num-btn {
       width: clamp(56px, 15vw, 62px);
       height: clamp(56px, 15vw, 62px);
-      background: linear-gradient(145deg, rgba(226,201,138,0.18), rgba(200,169,110,0.08));
-      border: 2px solid rgba(200,169,110,0.50);
+      background: rgba(200,169,110,0.14);
+      border: 2px solid #C8A96E;
       border-radius: 10px;
       font-family: 'Open Sans', sans-serif;
       font-size: 32px;
@@ -277,18 +282,19 @@
       justify-content: center;
       transition: all 0.16s ease;
       box-shadow:
-        0 0 10px rgba(200,169,110,0.18),
-        inset 0 0 8px rgba(200,169,110,0.05);
+        0 0 16px rgba(200,169,110,0.4),
+        0 0 32px rgba(200,169,110,0.15),
+        inset 0 0 12px rgba(200,169,110,0.08);
     }
 
     .num-btn:hover {
-      background: linear-gradient(145deg, rgba(226,201,138,0.32), rgba(200,169,110,0.18));
+      background: rgba(226,201,138,0.22);
       border-color: #E2C98A;
       color: #fff;
       box-shadow:
-        0 0 20px rgba(200,169,110,0.55),
-        0 0 40px rgba(200,169,110,0.18),
-        inset 0 0 12px rgba(200,169,110,0.10);
+        0 0 24px rgba(200,169,110,0.65),
+        0 0 48px rgba(200,169,110,0.25),
+        inset 0 0 16px rgba(200,169,110,0.12);
       transform: translateY(-2px);
     }
 
@@ -298,13 +304,21 @@
       border-color: #E2C98A;
       color: #3B1265;
       box-shadow:
-        0 0 28px rgba(200,169,110,0.85),
-        0 0 56px rgba(200,169,110,0.30);
+        0 0 32px rgba(200,169,110,0.85),
+        0 0 64px rgba(200,169,110,0.35);
       transform: scale(0.95);
     }
 
     /* Hide number when custom image button is used */
     .num-btn.has-image span { display: none; }
+
+    .pick-center-section {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      flex: 1;
+    }
 
     .pick-footer {
       margin-top: 5%;
@@ -421,29 +435,7 @@
     }
     .card-back-btn:hover { background: rgba(200,169,110,0.32); }
 
-    /* ══════════════════════════════════════════════════
-       MOBILE RESPONSIVE
-       On small screens: fill full viewport exactly
-       9:16 container becomes the full screen
-    ══════════════════════════════════════════════════ */
-    @media (max-width: 480px) {
-      body {
-        align-items: flex-start;
-        justify-content: flex-start;
-        background: #1a0835;
-        padding: 0;
-        margin: 0;
-      }
-      .device {
-        width: 100vw !important;
-        height: 100dvh !important;
-        border-radius: 0 !important;
-        box-shadow: none !important;
-        aspect-ratio: unset !important;
-        min-width: unset !important;
-        min-height: unset !important;
-      }
-    }
+    /* Mobile: Maintain 9:16 aspect ratio with borders */
 
     /* ══════════════════════════════════════════════════
        SCREEN: FINALE
@@ -504,24 +496,28 @@
   ════════════════════════════════════════════════ -->
   <div class="screen" id="screen-pick">
 
-    <img
-      class="pick-logo"
-      src="https://files.3c-public-library.org/CardGames/logo.png"
-      alt="3C"
-      onerror="this.style.display='none'"
-    />
-    <p class="pick-brand">3C Thread To Success</p>
-
-    <div class="pick-prompt-wrap">
-      <p class="pick-prompt">PRESS A NUMBER</p>
+    <div class="pick-header">
+      <img
+        class="pick-logo"
+        src="https://files.3c-public-library.org/CardGames/logo.png"
+        alt="3C"
+        onerror="this.style.display='none'"
+      />
+      <p class="pick-brand">3C Thread To Success</p>
     </div>
 
-    <!-- 4 top, 3 bottom centred -->
-    <div class="number-grid-top"    id="numGridTop"></div>
-    <div class="number-grid-bottom" id="numGridBottom"></div>
+    <div class="pick-center-section">
+      <div class="pick-prompt-wrap">
+        <p class="pick-prompt">PRESS A NUMBER</p>
+      </div>
 
-    <div class="pick-footer">
-      <p class="pick-instruction">Go ahead — choose any number<br>to see your results</p>
+      <!-- 4 top, 3 bottom centred -->
+      <div class="number-grid-top"    id="numGridTop"></div>
+      <div class="number-grid-bottom" id="numGridBottom"></div>
+
+      <div class="pick-footer">
+        <p class="pick-instruction">Go ahead — choose any number<br>to see your results</p>
+      </div>
     </div>
 
     <p class="pick-watermark">Designed &amp; built with ❤️ by Claude (Anthropic) × Chef Anica · 3C Thread To Success Cooking Lab 🧪👨‍🍳</p>
@@ -625,7 +621,11 @@
   function onScreenActivate(id) {
     switch (id) {
       case 'screen-intro':
-        loadMedia('introMediaWrap', deck.intro);
+        // Always load intro media when screen activates
+        const introWrap = document.getElementById('introMediaWrap');
+        if (introWrap && introWrap.children.length === 0) {
+          loadMedia('introMediaWrap', deck.intro);
+        }
         break;
       case 'screen-pick':
         buildNumberGrid(deck.cards);
@@ -644,7 +644,10 @@
   /* ── LOAD MEDIA ─────────────────────────────────── */
   function loadMedia(wrapId, url) {
     const wrap = document.getElementById(wrapId);
-    if (!wrap || !url || wrap.children.length > 0) return;
+    if (!wrap || !url) return;
+
+    // Clear existing content before loading new media
+    if (wrap.children.length > 0) return;
 
     if (isVideo(url)) {
       const v       = document.createElement('video');
