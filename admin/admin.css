@@ -30,7 +30,7 @@
 body {
   background: var(--bg);
   color: var(--white);
-  font-family: 'Lato', sans-serif;
+  font-family: 'Open Sans', sans-serif;
   min-height: 100vh;
   direction: ltr;
 }
@@ -52,22 +52,22 @@ body {
 #toolbar-left {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 3px;
 }
 
 #toolbar-title {
-  font-family: 'Cinzel', serif;
-  font-size: 1.15rem;
+  font-family: 'Open Sans', sans-serif;
+  font-size: 24px;
   font-weight: 700;
   color: var(--purple-neo);
-  letter-spacing: 0.08em;
+  display: block;
 }
 
 #toolbar-sub {
-  font-size: 0.72rem;
-  color: var(--text-muted);
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
+  font-family: 'Open Sans', sans-serif;
+  font-size: 16px;
+  color: var(--purple-neo);
+  display: block;
 }
 
 #toolbar-right {
@@ -77,10 +77,9 @@ body {
 }
 
 .btn-toolbar {
-  font-family: 'Lato', sans-serif;
-  font-size: 0.85rem;
+  font-family: 'Open Sans', sans-serif;
+  font-size: 10px;
   font-weight: 700;
-  letter-spacing: 0.06em;
   color: var(--gold-light);
   background: rgba(200,169,110,0.12);
   border: 1px solid rgba(200,169,110,0.35);
@@ -90,13 +89,16 @@ body {
   text-decoration: none;
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   transition: background 0.16s, border-color 0.16s;
   white-space: nowrap;
+  line-height: 1;
 }
 
 .btn-toolbar:hover {
   background: rgba(200,169,110,0.22);
   border-color: var(--gold);
+  color: var(--gold);
 }
 
 .btn-toolbar.btn-save {
@@ -214,10 +216,11 @@ input[type="text"][readonly] {
 /* ── DECK MEDIA ROW (Intro + Finale) ─────────────── */
 #deckMediaRow {
   display: flex;
-  gap: 24px;
+  gap: 32px;
   flex-wrap: wrap;
-  padding-top: 4px;
+  padding-top: 14px;
   border-top: 1px solid var(--border);
+  align-items: center;
 }
 
 .media-slot {
@@ -225,6 +228,10 @@ input[type="text"][readonly] {
   align-items: center;
   gap: 10px;
   flex-wrap: wrap;
+  padding: 8px 14px;
+  background: rgba(123,47,190,0.10);
+  border: 1px solid var(--border);
+  border-radius: 8px;
 }
 
 .media-label {
@@ -254,9 +261,9 @@ input[type="text"][readonly] {
 .upload-btn:hover { background: var(--purple-light); }
 
 .upload-filename {
-  font-size: 0.78rem;
-  color: var(--text-muted);
-  font-style: italic;
+  font-size: 11px;
+  color: var(--gold-light);
+  font-weight: 600;
 }
 
 /* ── ROW FLEX ────────────────────────────────────── */
