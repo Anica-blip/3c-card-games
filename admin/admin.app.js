@@ -164,23 +164,24 @@ function onSelectSlot(slot) {
 async function uploadToR2(file, slug, filename, target, statusEls) {
   const { nameEl, statusEl } = statusEls;
 
-  if (nameEl) nameEl.textContent = `⏳ Uploading ${file.name}…`;
+  if (nameEl) nameEl.textContent = `⏳ Uploading…`;
 
-  // Local preview immediately — doesn't wait for upload
+  // Local preview immediately
   if (target.localUrl) URL.revokeObjectURL(target.localUrl);
   target.localUrl = URL.createObjectURL(file);
   target.isVideo  = file.type.startsWith('video/');
 
-  // Capture extension from actual file
+  // Use the clean system filename (intro.mp4, card-01-front.png etc.)
+  // — not the original file.name which may have spaces/special chars
   const ext = file.name.split('.').pop().toLowerCase();
-  const filenameWithExt = filename.replace(/\.[^.]+$/, `.${ext}`);
-  target.filename = filenameWithExt;
+  const cleanFilename = filename.replace(/\.[^.]+$/, `.${ext}`);
+  target.filename = cleanFilename;
 
   // Render preview immediately
   render();
 
   try {
-    const res = await fetch(`${WORKER_URL}/media/${slug}/${filenameWithExt}`, {
+    const res = await fetch(`${WORKER_URL}/media/${slug}/${cleanFilename}`, {
       method:  'PUT',
       headers: {
         'Content-Type': file.type || 'application/octet-stream',
@@ -196,19 +197,11 @@ async function uploadToR2(file, slug, filename, target, statusEls) {
     const result = await res.json();
     target.r2Url = result.public_url;
 
-    if (nameEl) nameEl.textContent = `✅ ${filenameWithExt}`;
-    if (statusEl) {
-      statusEl.textContent = '✅ Saved to R2';
-      statusEl.style.color = '#4caf7d';
-    }
+    if (nameEl) nameEl.textContent = `✅ ${cleanFilename}`;
 
   } catch (err) {
     target.r2Url = null;
-    if (nameEl) nameEl.textContent = `❌ Upload failed — ${file.name}`;
-    if (statusEl) {
-      statusEl.textContent = '❌ Upload failed';
-      statusEl.style.color = '#e05555';
-    }
+    if (nameEl) nameEl.textContent = `❌ Upload failed`;
     console.error('R2 upload failed:', err.message);
   }
 }
