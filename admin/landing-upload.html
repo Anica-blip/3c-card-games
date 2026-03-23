@@ -7,112 +7,165 @@
 
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Lato:wght@300;400;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;600;700&display=swap" rel="stylesheet" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
 
   <style>
+    /* ── BRAND VARIABLES (matches admin panel) ── */
+    :root {
+      --bg:           #1a0a2e;
+      --bg-panel:     #231040;
+      --bg-input:     #160828;
+      --border:       rgba(200,169,110,0.20);
+      --border-focus: #C8A96E;
+      --purple:       #7B2FBE;
+      --purple-light: #9D4EDD;
+      --purple-neo:   #C77DFF;
+      --gold:         #C8A96E;
+      --gold-light:   #E2C98A;
+      --cyan:         #00D4FF;
+      --white:        #F0E6FF;
+      --text-muted:   rgba(200,180,240,0.55);
+      --success:      #4caf7d;
+      --danger:       #e05555;
+    }
+
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
-      background: #f9f9f9;
-      font-family: 'Lato', sans-serif;
+      background: var(--bg);
+      color: var(--white);
+      font-family: 'Open Sans', sans-serif;
       min-height: 100vh;
       display: flex;
-      align-items: flex-start;
-      justify-content: center;
-      padding: 40px 16px;
+      flex-direction: column;
     }
 
-    .panel {
-      background: #fff;
-      border-radius: 14px;
-      box-shadow: 0 3px 30px rgba(0,0,0,0.08);
-      padding: 36px 40px 48px;
-      width: 100%;
-      max-width: 600px;
-    }
-
-    /* ── HEADER ──────────────────────────────── */
-    .panel-header {
+    /* ── TOOLBAR ─────────────────────────────── */
+    #toolbar {
+      background: #12071f;
+      border-bottom: 1px solid var(--border);
       display: flex;
       align-items: center;
-      gap: 14px;
-      margin-bottom: 32px;
-      border-bottom: 2px solid #eaf4fc;
-      padding-bottom: 18px;
+      justify-content: space-between;
+      padding: 14px 28px;
+      box-shadow: 0 2px 20px rgba(0,0,0,0.4);
     }
 
-    .panel-header h1 {
-      font-family: 'Cinzel', serif;
-      font-size: 1.2rem;
-      color: #3B1265;
+    #toolbar-title {
+      font-size: 20px;
       font-weight: 700;
+      color: var(--purple-neo);
     }
 
-    .panel-header a {
-      margin-left: auto;
-      font-size: 0.85rem;
-      color: #4682b4;
+    #toolbar-back {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--gold-light);
+      background: rgba(200,169,110,0.12);
+      border: 1px solid rgba(200,169,110,0.35);
+      border-radius: 6px;
+      padding: 8px 18px;
+      cursor: pointer;
       text-decoration: none;
+      transition: background 0.16s;
     }
 
-    .panel-header a:hover { text-decoration: underline; }
-
-    /* ── FORM FIELDS ─────────────────────────── */
-    .field {
-      margin-bottom: 22px;
+    #toolbar-back:hover {
+      background: rgba(200,169,110,0.22);
+      border-color: var(--gold);
+      color: var(--gold);
     }
+
+    /* ── TWO COLUMN LAYOUT ───────────────────── */
+    .workspace {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      padding: 28px 32px;
+      flex: 1;
+      max-width: 1200px;
+      width: 100%;
+      margin: 0 auto;
+    }
+
+    /* ── COLUMN PANELS ───────────────────────── */
+    .col-panel {
+      background: var(--bg-panel);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .col-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--gold);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    /* ── FIELD ───────────────────────────────── */
+    .field { display: flex; flex-direction: column; gap: 7px; }
 
     .field label {
-      display: block;
+      font-size: 12px;
       font-weight: 700;
-      font-size: 0.92rem;
-      color: #333;
-      margin-bottom: 7px;
+      color: var(--gold-light);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
     }
 
     .field-hint {
-      display: block;
-      font-size: 0.8rem;
-      color: #888;
-      margin-top: 4px;
-      line-height: 1.5;
+      font-size: 11px;
+      color: var(--text-muted);
+      line-height: 1.6;
     }
 
-    select, input[type="text"] {
+    /* ── SELECT ──────────────────────────────── */
+    select {
       width: 100%;
-      padding: 9px 12px;
-      font-size: 0.95rem;
-      border: 1.5px solid #ccc;
+      padding: 10px 12px;
+      font-size: 13px;
+      font-family: 'Open Sans', sans-serif;
+      border: 1.5px solid var(--border);
       border-radius: 7px;
-      background: #fff;
-      color: #333;
+      background: var(--bg-input);
+      color: var(--white);
       direction: ltr;
+      cursor: pointer;
       appearance: none;
+      transition: border-color 0.16s;
     }
 
-    select:focus, input[type="text"]:focus {
+    select:focus {
       outline: none;
-      border-color: #4682b4;
-      box-shadow: 0 0 0 2px rgba(70,130,180,0.15);
+      border-color: var(--border-focus);
+      box-shadow: 0 0 0 2px rgba(200,169,110,0.15);
     }
 
     /* ── UPLOAD AREA ─────────────────────────── */
     .upload-area {
-      border: 2px dashed #ccc;
+      border: 2px dashed rgba(200,169,110,0.30);
       border-radius: 10px;
-      padding: 32px 20px;
+      padding: 36px 20px;
       text-align: center;
       cursor: pointer;
       transition: border-color 0.2s, background 0.2s;
-      background: #fafafa;
+      background: rgba(123,47,190,0.08);
       position: relative;
+      flex: 1;
     }
 
     .upload-area:hover,
     .upload-area.dragover {
-      border-color: #4682b4;
-      background: #f0f7ff;
+      border-color: var(--gold);
+      background: rgba(123,47,190,0.18);
     }
 
     .upload-area input[type="file"] {
@@ -124,39 +177,40 @@
       height: 100%;
     }
 
-    .upload-icon { font-size: 2.2rem; margin-bottom: 10px; }
+    .upload-icon { font-size: 2rem; margin-bottom: 10px; }
 
     .upload-area p {
-      font-size: 0.9rem;
-      color: #666;
-      line-height: 1.5;
+      font-size: 12px;
+      color: var(--text-muted);
+      line-height: 1.6;
     }
 
-    .upload-area .chosen-file {
+    .upload-area strong { color: var(--gold-light); }
+
+    .chosen-file {
       margin-top: 10px;
-      font-size: 0.88rem;
+      font-size: 12px;
       font-weight: 700;
-      color: #3B1265;
+      color: var(--cyan);
     }
 
-    /* ── PREVIEW ─────────────────────────────── */
+    /* ── RIGHT COLUMN CONTENT ────────────────── */
+
+    /* 9:16 preview */
     #previewWrap {
       display: none;
-      margin-top: 18px;
-      border-radius: 10px;
-      overflow: hidden;
-      /* 9:16 ratio preview */
       position: relative;
       width: 100%;
-      max-width: 220px;
-      margin-left: auto;
-      margin-right: auto;
+      max-width: 240px;
+      margin: 0 auto;
+      border-radius: 10px;
+      overflow: hidden;
     }
 
     #previewWrap::before {
       content: '';
       display: block;
-      padding-top: 177.78%; /* 16/9 */
+      padding-top: 177.78%;
     }
 
     #previewWrap img,
@@ -170,98 +224,112 @@
       display: block;
     }
 
+    /* Preview placeholder */
+    #previewPlaceholder {
+      width: 100%;
+      max-width: 240px;
+      margin: 0 auto;
+      aspect-ratio: 9 / 16;
+      background: rgba(123,47,190,0.12);
+      border: 2px dashed var(--border);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-muted);
+      font-size: 12px;
+      text-align: center;
+      padding: 20px;
+    }
+
     /* ── UPLOAD BUTTON ───────────────────────── */
     #btnUpload {
       width: 100%;
       padding: 14px;
-      background: linear-gradient(135deg, #5A2090, #3B1265);
-      color: #E2C98A;
-      font-family: 'Cinzel', serif;
-      font-size: 1rem;
+      background: var(--purple);
+      color: var(--gold-light);
+      font-family: 'Open Sans', sans-serif;
+      font-size: 13px;
       font-weight: 700;
-      letter-spacing: 0.12em;
+      letter-spacing: 0.08em;
       border: none;
       border-radius: 8px;
       cursor: pointer;
-      margin-top: 24px;
-      transition: opacity 0.18s;
+      transition: background 0.18s;
+      text-transform: uppercase;
     }
 
     #btnUpload:disabled {
-      opacity: 0.45;
+      opacity: 0.35;
       cursor: not-allowed;
     }
 
-    #btnUpload:hover:not(:disabled) { opacity: 0.88; }
-
-    /* ── STATUS ──────────────────────────────── */
-    #statusMsg {
-      margin-top: 18px;
-      padding: 12px 16px;
-      border-radius: 8px;
-      font-size: 0.9rem;
-      display: none;
-      line-height: 1.5;
-    }
-
-    #statusMsg.success {
-      background: #e8f9ee;
-      border: 1.5px solid #4caf50;
-      color: #1b5e20;
-      display: block;
-    }
-
-    #statusMsg.error {
-      background: #fdecea;
-      border: 1.5px solid #e53935;
-      color: #b71c1c;
-      display: block;
-    }
-
-    #statusMsg.loading {
-      background: #f3f8ff;
-      border: 1.5px solid #4682b4;
-      color: #1a237e;
-      display: block;
-    }
+    #btnUpload:hover:not(:disabled) { background: var(--purple-light); }
 
     /* ── PROGRESS BAR ────────────────────────── */
     #progressWrap {
       display: none;
-      margin-top: 14px;
-      background: #eee;
+      background: rgba(255,255,255,0.08);
       border-radius: 50px;
-      height: 8px;
+      height: 6px;
       overflow: hidden;
     }
 
     #progressBar {
       height: 100%;
       width: 0%;
-      background: linear-gradient(90deg, #5A2090, #00D4FF);
+      background: linear-gradient(90deg, var(--purple), var(--cyan));
       border-radius: 50px;
       transition: width 0.3s ease;
+    }
+
+    /* ── STATUS ──────────────────────────────── */
+    #statusMsg {
+      padding: 11px 14px;
+      border-radius: 8px;
+      font-size: 12px;
+      display: none;
+      line-height: 1.6;
+      white-space: pre-line;
+    }
+
+    #statusMsg.success {
+      background: rgba(76,175,125,0.15);
+      border: 1px solid var(--success);
+      color: var(--success);
+      display: block;
+    }
+
+    #statusMsg.error {
+      background: rgba(224,85,85,0.15);
+      border: 1px solid var(--danger);
+      color: var(--danger);
+      display: block;
+    }
+
+    #statusMsg.loading {
+      background: rgba(0,212,255,0.08);
+      border: 1px solid rgba(0,212,255,0.30);
+      color: var(--cyan);
+      display: block;
     }
 
     /* ── RESULT URL ──────────────────────────── */
     #resultBlock {
       display: none;
-      margin-top: 18px;
-      padding: 14px 16px;
-      background: #f3f8ff;
-      border: 1.5px solid #4682b4;
-      border-radius: 8px;
+      flex-direction: column;
+      gap: 8px;
     }
 
     #resultBlock label {
-      font-size: 0.8rem;
+      font-size: 11px;
       font-weight: 700;
-      color: #333;
-      display: block;
-      margin-bottom: 6px;
+      color: var(--gold);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
     }
 
-    #resultBlock .url-row {
+    .url-row {
       display: flex;
       gap: 8px;
       align-items: center;
@@ -269,128 +337,151 @@
 
     #resultUrl {
       flex: 1;
-      padding: 6px 8px;
-      font-size: 0.82rem;
-      border: 1px solid #ccc;
-      border-radius: 5px;
-      background: #fff;
-      color: #333;
+      padding: 7px 10px;
+      font-size: 11px;
+      font-family: 'Open Sans', sans-serif;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: var(--bg-input);
+      color: var(--text-muted);
       direction: ltr;
     }
 
     #btnCopyUrl {
-      padding: 6px 14px;
-      font-size: 0.82rem;
-      background: #4682b4;
-      color: #fff;
-      border: none;
-      border-radius: 5px;
+      padding: 7px 14px;
+      font-size: 11px;
+      font-family: 'Open Sans', sans-serif;
+      font-weight: 700;
+      background: rgba(200,169,110,0.15);
+      color: var(--gold-light);
+      border: 1px solid var(--border);
+      border-radius: 6px;
       cursor: pointer;
       white-space: nowrap;
+      transition: background 0.15s;
     }
 
-    #btnCopyUrl:hover { background: #2c5f8a; }
+    #btnCopyUrl:hover { background: rgba(200,169,110,0.28); }
 
     #copiedMsg {
-      font-size: 0.8rem;
-      color: green;
+      font-size: 11px;
+      color: var(--success);
+      font-weight: 700;
       display: none;
-      margin-top: 4px;
     }
 
-    @media (max-width: 500px) {
-      .panel { padding: 24px 16px 36px; }
+    /* ── RESPONSIVE ──────────────────────────── */
+    @media (max-width: 800px) {
+      .workspace {
+        grid-template-columns: 1fr;
+        padding: 16px;
+      }
     }
   </style>
 </head>
 <body>
 
-<div class="panel">
+  <!-- Toolbar -->
+  <header id="toolbar">
+    <span id="toolbar-title">🃏 Landing Upload</span>
+    <a href="index.html" id="toolbar-back">← Back to Admin</a>
+  </header>
 
-  <!-- Header -->
-  <div class="panel-header">
-    <h1>🃏 Landing Upload</h1>
-    <a href="index.html">← Back to Admin</a>
-  </div>
+  <!-- Two-column workspace -->
+  <div class="workspace">
 
-  <!-- Step 1: Pick deck -->
-  <div class="field">
-    <label for="deckSelect">Select Deck</label>
-    <select id="deckSelect">
-      <option value="">Loading decks…</option>
-    </select>
-    <span class="field-hint">
-      Only saved decks appear here. Save your deck in the admin first,
-      then come back to upload the landing media.
-    </span>
-  </div>
+    <!-- ── LEFT: Select deck + Upload ─────────── -->
+    <div class="col-panel">
+      <div class="col-title">1 — Select &amp; Upload</div>
 
-  <!-- Step 2: Upload file -->
-  <div class="field">
-    <label>Landing Image or Video</label>
-    <div
-      class="upload-area"
-      id="uploadArea"
-      ondragover="handleDragOver(event)"
-      ondragleave="handleDragLeave(event)"
-      ondrop="handleDrop(event)"
-    >
-      <input
-        type="file"
-        id="fileInput"
-        accept="image/*,video/*"
-        onchange="handleFileSelect(this)"
-      />
-      <div class="upload-icon">📁</div>
-      <p>
-        Click to choose or drag &amp; drop<br>
-        <strong>Image or Video</strong> (PNG, JPG, MP4, WEBM…)
-      </p>
-      <div class="chosen-file" id="chosenFileName"></div>
-    </div>
-    <span class="field-hint">
-      This is the first screen users see when they open your shared deck link.
-      Each deck has its own landing media stored separately in Cloudflare R2.
-    </span>
-  </div>
+      <!-- Deck dropdown -->
+      <div class="field">
+        <label for="deckSelect">Select Deck</label>
+        <select id="deckSelect">
+          <option value="">Loading decks…</option>
+        </select>
+        <span class="field-hint">
+          Only saved decks appear here. Save your deck in the admin first,
+          then come back to upload the landing media.
+        </span>
+      </div>
 
-  <!-- Preview -->
-  <div id="previewWrap"></div>
+      <!-- Upload area -->
+      <div class="field">
+        <label>Landing Image or Video</label>
+        <div
+          class="upload-area"
+          id="uploadArea"
+          ondragover="handleDragOver(event)"
+          ondragleave="handleDragLeave(event)"
+          ondrop="handleDrop(event)"
+        >
+          <input
+            type="file"
+            id="fileInput"
+            accept="image/*,video/*"
+            onchange="handleFileSelect(this)"
+          />
+          <div class="upload-icon">📁</div>
+          <p>
+            Click to choose or drag &amp; drop<br>
+            <strong>Image or Video</strong> (PNG, JPG, MP4, WEBM…)
+          </p>
+          <div class="chosen-file" id="chosenFileName"></div>
+        </div>
+        <span class="field-hint">
+          This is the first screen users see when they open your shared deck link.
+          Each deck has its own landing media stored separately in Cloudflare R2.
+        </span>
+      </div>
 
-  <!-- Progress -->
-  <div id="progressWrap">
-    <div id="progressBar"></div>
-  </div>
+    </div><!-- /left col -->
 
-  <!-- Status -->
-  <div id="statusMsg"></div>
+    <!-- ── RIGHT: Preview + Upload to Cloudflare ── -->
+    <div class="col-panel">
+      <div class="col-title">2 — Preview &amp; Save to Cloudflare</div>
 
-  <!-- Result URL -->
-  <div id="resultBlock">
-    <label>Saved to Cloudflare R2 — public URL:</label>
-    <div class="url-row">
-      <input type="text" id="resultUrl" readonly />
-      <button id="btnCopyUrl" onclick="copyUrl()">Copy</button>
-    </div>
-    <div id="copiedMsg">Copied!</div>
-  </div>
+      <!-- Preview placeholder / actual preview -->
+      <div id="previewPlaceholder">
+        Preview appears here<br>after selecting a file
+      </div>
+      <div id="previewWrap"></div>
 
-  <!-- Upload button -->
-  <button id="btnUpload" disabled onclick="uploadLanding()">
-    UPLOAD TO CLOUDFLARE
-  </button>
+      <!-- Progress -->
+      <div id="progressWrap">
+        <div id="progressBar"></div>
+      </div>
 
-</div><!-- /panel -->
+      <!-- Status -->
+      <div id="statusMsg"></div>
+
+      <!-- Result URL -->
+      <div id="resultBlock">
+        <label>Saved — public URL:</label>
+        <div class="url-row">
+          <input type="text" id="resultUrl" readonly />
+          <button id="btnCopyUrl" onclick="copyUrl()">Copy</button>
+        </div>
+        <div id="copiedMsg">Copied!</div>
+      </div>
+
+      <!-- Upload button -->
+      <button id="btnUpload" disabled onclick="uploadLanding()">
+        Upload to Cloudflare
+      </button>
+
+    </div><!-- /right col -->
+
+  </div><!-- /workspace -->
 
 <script type="module">
   import { fetchAllDecks } from './supabaseAPI.js';
 
-  /* ── CONFIG ───────────────────────────────────── */
   const WORKER_URL = 'https://3c-card-games.3c-innertherapy.workers.dev';
 
   let selectedFile = null;
 
-  /* ── Load deck list from Supabase ─────────────── */
+  /* ── Load decks ───────────────────────────────── */
   async function loadDecks() {
     const select = document.getElementById('deckSelect');
     const data   = await fetchAllDecks();
@@ -406,14 +497,13 @@
       ).join('');
   }
 
-  /* ── File select handler ──────────────────────── */
+  /* ── File select ──────────────────────────────── */
   window.handleFileSelect = function(input) {
     const file = input.files[0];
     if (!file) return;
     setFile(file);
   };
 
-  /* ── Drag and drop ────────────────────────────── */
   window.handleDragOver = function(e) {
     e.preventDefault();
     document.getElementById('uploadArea').classList.add('dragover');
@@ -435,21 +525,23 @@
     selectedFile = file;
     document.getElementById('chosenFileName').textContent = file.name;
 
-    // Preview
-    const wrap = document.getElementById('previewWrap');
-    wrap.innerHTML = '';
-    wrap.style.display = 'block';
+    // Show preview in right column
+    const placeholder = document.getElementById('previewPlaceholder');
+    const wrap        = document.getElementById('previewWrap');
+    wrap.innerHTML    = '';
+    placeholder.style.display = 'none';
+    wrap.style.display        = 'block';
 
     const localUrl = URL.createObjectURL(file);
 
     if (file.type.startsWith('video/')) {
       const v = document.createElement('video');
-      v.src       = localUrl;
-      v.autoplay  = true;
-      v.muted     = true;
-      v.loop      = true;
+      v.src         = localUrl;
+      v.autoplay    = true;
+      v.muted       = true;
+      v.loop        = true;
       v.playsInline = true;
-      v.controls  = false;
+      v.controls    = false;
       wrap.appendChild(v);
     } else {
       const img = document.createElement('img');
@@ -458,11 +550,9 @@
       wrap.appendChild(img);
     }
 
-    // Enable upload button if deck also selected
     checkReady();
   }
 
-  /* ── Deck select change ───────────────────────── */
   document.getElementById('deckSelect').addEventListener('change', checkReady);
 
   function checkReady() {
@@ -470,15 +560,7 @@
     document.getElementById('btnUpload').disabled = !(slug && selectedFile);
   }
 
-  /* ── Upload to Cloudflare via worker ──────────── */
-  /*
-    Two steps:
-    1. PUT /landing/:slug  → stores binary file in R2
-                           → worker returns { public_url } with correct extension
-    2. GET /deck/:slug     → fetch existing deck JSON
-       PATCH landing field → set to public_url (correct extension, .png OR .mp4 etc.)
-       PUT /deck/:slug     → save updated JSON back to R2
-  */
+  /* ── Upload ───────────────────────────────────── */
   window.uploadLanding = async function() {
     const slug = document.getElementById('deckSelect').value;
     if (!slug || !selectedFile) return;
@@ -487,11 +569,10 @@
 
     setStatus('loading', '⏳ Step 1 of 2 — Uploading landing media to R2…');
     showProgress(true);
-    document.getElementById('btnUpload').disabled = true;
+    document.getElementById('btnUpload').disabled      = true;
     document.getElementById('resultBlock').style.display = 'none';
 
     try {
-      // ── Step 1: Upload binary file ─────────────
       animateProgress(0, 50, 800);
 
       const uploadRes = await fetch(`${WORKER_URL}/landing/${slug}`, {
@@ -511,19 +592,15 @@
       const uploadResult = await uploadRes.json();
       const publicUrl    = uploadResult.public_url;
 
-      // ── Step 2: Patch landing URL into deck JSON ─
       setStatus('loading', '⏳ Step 2 of 2 — Updating deck JSON with landing URL…');
       animateProgress(50, 80, 400);
 
-      // Fetch existing deck JSON
       const getRes = await fetch(`${WORKER_URL}/deck/${slug}`);
       if (!getRes.ok) throw new Error(`Could not fetch deck JSON (${getRes.status})`);
       const deckJson = await getRes.json();
 
-      // Patch the landing field with correct URL + extension
       deckJson.landing = publicUrl;
 
-      // Save updated JSON back to R2
       const saveRes = await fetch(`${WORKER_URL}/deck/${slug}`, {
         method:  'PUT',
         headers: { 'Content-Type': 'application/json' },
@@ -537,14 +614,11 @@
       setTimeout(() => {
         showProgress(false);
         setStatus('success',
-          `✅ Done!\n` +
-          `Landing media saved + deck JSON updated.\n` +
-          `File: ${uploadResult.r2_key}`
+          `✅ Done! Landing media saved + deck JSON updated.\nFile: ${uploadResult.r2_key}`
         );
-
-        document.getElementById('resultUrl').value        = publicUrl;
-        document.getElementById('resultBlock').style.display = 'block';
-        document.getElementById('btnUpload').disabled      = false;
+        document.getElementById('resultUrl').value          = publicUrl;
+        document.getElementById('resultBlock').style.display = 'flex';
+        document.getElementById('btnUpload').disabled        = false;
       }, 350);
 
     } catch (err) {
@@ -566,7 +640,7 @@
 
   /* ── Helpers ──────────────────────────────────── */
   function setStatus(type, msg) {
-    const el = document.getElementById('statusMsg');
+    const el      = document.getElementById('statusMsg');
     el.className  = type;
     el.textContent = msg;
   }
