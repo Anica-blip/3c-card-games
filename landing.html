@@ -294,6 +294,22 @@
                           ? deckJson.landing
                           : `${R2_PUBLIC}/${slug}/landing.png`;
 
+    // Preload intro video in background if it exists
+    const introUrl = (deckJson && deckJson.intro) || null;
+    if (introUrl && isVideo(introUrl)) {
+      const preloadVideo = document.createElement('video');
+      preloadVideo.preload = 'auto';
+      preloadVideo.muted = true;
+      preloadVideo.style.display = 'none';
+      const preloadSource = document.createElement('source');
+      preloadSource.src = introUrl;
+      preloadSource.type = 'video/mp4';
+      preloadVideo.appendChild(preloadSource);
+      document.body.appendChild(preloadVideo);
+      // Store intro URL for public app
+      sessionStorage.setItem('introVideoPreloaded', introUrl);
+    }
+
     /* ── Inject media ─────────────────────────── */
     if (isVideo(landingUrl)) {
       // Video
