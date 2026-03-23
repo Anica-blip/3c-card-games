@@ -452,7 +452,7 @@ function renderSidebar() {
 
   list.innerHTML = deckData.cards.map((card, i) => {
     const isActive = i === selectedCardIdx;
-    const thumbSrc = card.front.localUrl || '';
+    const thumbSrc = card.front.localUrl || card.front.r2Url || '';
 
     return `
       <li>
