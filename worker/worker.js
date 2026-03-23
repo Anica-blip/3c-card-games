@@ -15,9 +15,11 @@
  *
  * R2 key conventions:
  *   CardGames/{slug}/deck.json
- *   CardGames/{slug}/landing.png  (or .mp4, .webm etc.)
- *   CardGames/{slug}/card-01-front.png  ← uploaded via Cloudflare dashboard
- *   CardGames/{slug}/card-01-back.png   ← uploaded via Cloudflare dashboard
+ *   CardGames/{slug}/landing.{ext}    ← via /landing/:slug
+ *   CardGames/{slug}/intro.{ext}      ← via /media/:slug/:filename
+ *   CardGames/{slug}/finale.{ext}     ← via /media/:slug/:filename
+ *   CardGames/{slug}/card-01-front.{ext} ← via /media/:slug/:filename
+ *   CardGames/{slug}/card-01-back.{ext}  ← via /media/:slug/:filename
  *
  * R2 binding name: CARD_GAMES_BUCKET
  * (wrangler.toml → r2_buckets → binding = "CARD_GAMES_BUCKET")
@@ -220,6 +222,67 @@ export default {
       }
     }
 
+    /* ── Route: /media/:slug/:filename ─────────────
+      PUT /media/:slug/:filename
+        Accepts any image or video binary.
+        Supports: png, jpg, jpeg, gif, webp,
+                  mp4, webm, mov, ogg
+        Stored at: CardGames/{slug}/{filename}
+        Returns:   { ok, r2_key, public_url }
+
+        Used by admin for:
+          intro, finale, card fronts, card backs
+    */
+    const mediaMatch = url.pathname.match(
+      /^\/media\/([a-z0-9.\-]+)\/([a-z0-9.\-_]+)$/i
+    );
+    if (mediaMatch) {
+      const slug     = mediaMatch[1];
+      const filename = mediaMatch[2];
+
+      if (method !== 'PUT') {
+        return respond(
+          JSON.stringify({ error: 'Only PUT is supported on /media/:slug/:filename' }),
+          405, origin
+        );
+      }
+
+      try {
+        const ext      = filename.split('.').pop().toLowerCase();
+        const mimeType = getMimeType(ext);
+        const r2Key    = `CardGames/${slug}/${filename}`;
+        const publicUrl = `https://files.3c-public-library.org/${r2Key}`;
+
+        const arrayBuffer = await request.arrayBuffer();
+
+        if (arrayBuffer.byteLength === 0) {
+          return respond(
+            JSON.stringify({ error: 'Empty file body' }),
+            400, origin
+          );
+        }
+
+        await env.CARD_GAMES_BUCKET.put(r2Key, arrayBuffer, {
+          httpMetadata: { contentType: mimeType },
+        });
+
+        return respond(
+          JSON.stringify({
+            ok:         true,
+            r2_key:     r2Key,
+            public_url: publicUrl,
+          }),
+          200, origin
+        );
+
+      } catch (err) {
+        return respond(
+          JSON.stringify({ error: 'Media upload failed', detail: err.message }),
+          500, origin
+        );
+      }
+    }
+
     /* ── No route matched ───────────────────────── */
     return respond(
       JSON.stringify({
@@ -229,6 +292,7 @@ export default {
           'PUT    /deck/:slug',
           'DELETE /deck/:slug',
           'PUT    /landing/:slug',
+          'PUT    /media/:slug/:filename',
         ],
       }),
       404, origin
