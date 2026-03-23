@@ -556,25 +556,30 @@ function updatePreview(target, imgSel, videoSel, emptySel) {
   const videoEl = $(videoSel);
   const emptyEl = $(emptySel);
 
-  if (!target.localUrl) {
-    if (imgEl)   { imgEl.style.display   = 'none'; imgEl.src = ''; }
-    if (videoEl) { videoEl.style.display = 'none'; videoEl.src = ''; }
+  // Use localUrl first (just uploaded), fall back to r2Url (loaded from archive)
+  const previewUrl = target.localUrl || target.r2Url || null;
+
+  if (!previewUrl) {
+    if (imgEl)   { imgEl.style.display = 'none'; imgEl.removeAttribute('src'); }
+    if (videoEl) { videoEl.style.display = 'none'; videoEl.removeAttribute('src'); }
     if (emptyEl)   emptyEl.style.display = 'flex';
     return;
   }
 
   if (emptyEl) emptyEl.style.display = 'none';
 
-  if (target.isVideo) {
-    if (imgEl)   imgEl.style.display   = 'none';
+  const useVideo = target.localUrl ? target.isVideo : /\.(mp4|webm|mov|ogg)$/i.test(previewUrl);
+
+  if (useVideo) {
+    if (imgEl)   imgEl.style.display = 'none';
     if (videoEl) {
-      videoEl.src          = target.localUrl;
+      videoEl.src           = previewUrl;
       videoEl.style.display = 'block';
     }
   } else {
     if (videoEl) videoEl.style.display = 'none';
     if (imgEl) {
-      imgEl.src          = target.localUrl;
+      imgEl.src           = previewUrl;
       imgEl.style.display = 'block';
     }
   }
