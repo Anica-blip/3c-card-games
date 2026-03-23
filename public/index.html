@@ -122,10 +122,10 @@
     /* ── BUTTONS ─────────────────────────────────────── */
     /* Gold pill — used on Intro (LET'S GO), card NEXT */
     .btn-gold {
-      font-family: 'Cinzel', serif;
+      font-family: 'Open Sans', sans-serif;
       font-size: clamp(0.85rem, 2.5vw, 1rem);
       font-weight: 700;
-      letter-spacing: 0.18em;
+      letter-spacing: 0.12em;
       color: #3B1265;
       background: linear-gradient(135deg, #E2C98A, #C8A96E);
       border: none;
@@ -140,10 +140,10 @@
 
     /* Gold outline — used on finale BACK / CLOSE */
     .btn-outline {
-      font-family: 'Cinzel', serif;
+      font-family: 'Open Sans', sans-serif;
       font-size: clamp(0.8rem, 2.2vw, 0.92rem);
       font-weight: 700;
-      letter-spacing: 0.15em;
+      letter-spacing: 0.1em;
       color: #E2C98A;
       background: rgba(200,169,110,0.10);
       border: 1.5px solid rgba(200,169,110,0.55);
@@ -204,7 +204,7 @@
        Same frame — branded content inside
     ══════════════════════════════════════════════════ */
     #screen-pick {
-      background: #2D0F55;
+      background: #1a0a2e;
       justify-content: flex-start;
       padding: 5% 6% 4%;
       gap: 0;
@@ -217,8 +217,8 @@
     }
 
     .pick-brand {
-      font-family: 'Cinzel', serif;
-      font-size: clamp(0.55rem, 1.6vw, 0.7rem);
+      font-family: 'Open Sans', sans-serif;
+      font-size: clamp(0.6rem, 1.8vw, 0.75rem);
       color: #00D4FF;
       letter-spacing: 0.12em;
       margin-bottom: 5%;
@@ -234,11 +234,11 @@
       margin-bottom: 6%;
     }
     .pick-prompt {
-      font-family: 'Cinzel', serif;
+      font-family: 'Open Sans', sans-serif;
       font-size: clamp(0.82rem, 2.6vw, 1rem);
       font-weight: 700;
       color: #00D4FF;
-      letter-spacing: 0.15em;
+      letter-spacing: 0.08em;
       text-align: center;
     }
 
@@ -259,79 +259,64 @@
       max-width: 300px;
     }
 
-    /* ── SQUARE NUMBER BUTTONS ────────────────────────
-       Square, not rounded. Neon glow on hover/active.
-       Gold number on cyan background — same brand palette.
-    ─────────────────────────────────────────────────── */
+    /* ── GOLD GLOWING NUMBER BUTTONS ─────────────────── */
     .num-btn {
       width: clamp(58px, 16vw, 66px);
       height: clamp(58px, 16vw, 66px);
-      background: rgba(0,212,255,0.12);
-      border: 2px solid rgba(0,212,255,0.50);
-      border-radius: 10px; /* slight rounding — feels mobile-native */
-      font-family: 'Cinzel', serif;
-      font-size: clamp(1.4rem, 5vw, 1.9rem);
-      font-weight: 900;
-      color: #C8A96E;
+      background: linear-gradient(135deg, rgba(226,201,138,0.15), rgba(200,169,110,0.10));
+      border: 2px solid rgba(200,169,110,0.55);
+      border-radius: 10px;
+      font-family: 'Open Sans', sans-serif;
+      font-size: 22px;
+      font-weight: 700;
+      color: #E2C98A;
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
       transition: all 0.16s ease;
-      position: relative;
-      overflow: hidden;
-    }
-
-    /* Neon glow idle */
-    .num-btn {
       box-shadow:
-        0 0 8px rgba(0,212,255,0.20),
-        inset 0 0 8px rgba(0,212,255,0.05);
+        0 0 8px rgba(200,169,110,0.20),
+        inset 0 0 8px rgba(200,169,110,0.05);
     }
 
-    /* Hover — brighter glow */
     .num-btn:hover {
-      background: rgba(0,212,255,0.22);
-      border-color: #00D4FF;
-      color: #E2C98A;
+      background: linear-gradient(135deg, rgba(226,201,138,0.30), rgba(200,169,110,0.20));
+      border-color: #E2C98A;
+      color: #fff;
       box-shadow:
-        0 0 18px rgba(0,212,255,0.55),
-        0 0 36px rgba(0,212,255,0.20),
-        inset 0 0 12px rgba(0,212,255,0.12);
+        0 0 18px rgba(200,169,110,0.55),
+        0 0 36px rgba(200,169,110,0.20),
+        inset 0 0 12px rgba(200,169,110,0.12);
       transform: translateY(-2px);
     }
 
-    /* Active / selected — full neon highlight */
     .num-btn:active,
     .num-btn.selected {
-      background: rgba(0,212,255,0.35);
-      border-color: #00D4FF;
-      color: #fff;
+      background: linear-gradient(135deg, #E2C98A, #C8A96E);
+      border-color: #E2C98A;
+      color: #3B1265;
       box-shadow:
-        0 0 24px rgba(0,212,255,0.8),
-        0 0 48px rgba(0,212,255,0.35),
-        inset 0 0 16px rgba(0,212,255,0.20);
+        0 0 24px rgba(200,169,110,0.8),
+        0 0 48px rgba(200,169,110,0.35);
       transform: scale(0.95);
     }
 
     .pick-footer {
       margin-top: 6%;
       text-align: center;
+      padding: 0 10%;
     }
-    .pick-title-block {
-      font-family: 'Cinzel', serif;
-      color: #C8A96E;
-      font-size: clamp(0.75rem, 2.2vw, 0.92rem);
-      letter-spacing: 0.1em;
-    }
-    .pick-title-block span {
-      display: block;
+
+    /* Generic instruction text */
+    .pick-instruction {
       font-family: 'Open Sans', sans-serif;
-      font-size: clamp(0.82rem, 2.5vw, 1rem);
-      font-weight: 600;
-      color: rgba(255,255,255,0.85);
-      letter-spacing: 0;
-      margin-top: 4px;
+      font-size: clamp(0.78rem, 2.2vw, 0.88rem);
+      font-weight: 400;
+      color: rgba(226,201,138,0.75);
+      text-align: center;
+      line-height: 1.5;
+      letter-spacing: 0.02em;
     }
 
     /* ══════════════════════════════════════════════════
@@ -495,10 +480,7 @@
     <div class="number-grid-bottom" id="numGridBottom"></div>
 
     <div class="pick-footer">
-      <div class="pick-title-block" id="pickTitle">
-        AURION'S
-        <span id="pickSubTitle">Lucky Wisdom Deck Cards</span>
-      </div>
+      <p class="pick-instruction">Go ahead — choose any number<br>to see your results</p>
     </div>
 
   </div>
@@ -604,8 +586,6 @@
         break;
       case 'screen-pick':
         buildNumberGrid(deck.cards);
-        document.getElementById('pickSubTitle').textContent =
-          deck.title || 'Lucky Wisdom Deck Cards';
         break;
       case 'screen-card':
         break;
