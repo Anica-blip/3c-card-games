@@ -206,13 +206,14 @@
     #screen-pick {
       background: #1a0a2e;
       justify-content: flex-start;
-      padding: 5% 6% 4%;
+      padding: 0 6% 3%;
       gap: 0;
+      align-items: center;
     }
 
     .pick-logo {
       width: clamp(32px, 8%, 44px);
-      margin-top: 3%;
+      margin-top: 5%;
       margin-bottom: 2%;
     }
 
@@ -242,32 +243,32 @@
       text-align: center;
     }
 
-    /* Number grids */
+    /* Number grids — centred */
     .number-grid-top {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
-      gap: clamp(10px, 3%, 16px);
+      gap: clamp(10px, 3%, 14px);
       width: 100%;
-      max-width: 300px;
-      margin-bottom: clamp(10px, 3%, 16px);
+      max-width: 280px;
+      margin-bottom: clamp(10px, 3%, 14px);
     }
     .number-grid-bottom {
       display: flex;
       justify-content: center;
-      gap: clamp(10px, 3%, 16px);
+      gap: clamp(10px, 3%, 14px);
       width: 100%;
-      max-width: 300px;
+      max-width: 280px;
     }
 
-    /* ── GOLD GLOWING NUMBER BUTTONS ─────────────────── */
+    /* ── GOLD NUMBER BUTTONS ─────────────────────────── */
     .num-btn {
-      width: clamp(58px, 16vw, 66px);
-      height: clamp(58px, 16vw, 66px);
-      background: linear-gradient(135deg, rgba(226,201,138,0.15), rgba(200,169,110,0.10));
-      border: 2px solid rgba(200,169,110,0.55);
+      width: clamp(56px, 15vw, 62px);
+      height: clamp(56px, 15vw, 62px);
+      background: linear-gradient(145deg, rgba(226,201,138,0.18), rgba(200,169,110,0.08));
+      border: 2px solid rgba(200,169,110,0.50);
       border-radius: 10px;
       font-family: 'Open Sans', sans-serif;
-      font-size: 22px;
+      font-size: 32px;
       font-weight: 700;
       color: #E2C98A;
       cursor: pointer;
@@ -276,18 +277,18 @@
       justify-content: center;
       transition: all 0.16s ease;
       box-shadow:
-        0 0 8px rgba(200,169,110,0.20),
+        0 0 10px rgba(200,169,110,0.18),
         inset 0 0 8px rgba(200,169,110,0.05);
     }
 
     .num-btn:hover {
-      background: linear-gradient(135deg, rgba(226,201,138,0.30), rgba(200,169,110,0.20));
+      background: linear-gradient(145deg, rgba(226,201,138,0.32), rgba(200,169,110,0.18));
       border-color: #E2C98A;
       color: #fff;
       box-shadow:
-        0 0 18px rgba(200,169,110,0.55),
-        0 0 36px rgba(200,169,110,0.20),
-        inset 0 0 12px rgba(200,169,110,0.12);
+        0 0 20px rgba(200,169,110,0.55),
+        0 0 40px rgba(200,169,110,0.18),
+        inset 0 0 12px rgba(200,169,110,0.10);
       transform: translateY(-2px);
     }
 
@@ -297,26 +298,42 @@
       border-color: #E2C98A;
       color: #3B1265;
       box-shadow:
-        0 0 24px rgba(200,169,110,0.8),
-        0 0 48px rgba(200,169,110,0.35);
+        0 0 28px rgba(200,169,110,0.85),
+        0 0 56px rgba(200,169,110,0.30);
       transform: scale(0.95);
     }
 
+    /* Hide number when custom image button is used */
+    .num-btn.has-image span { display: none; }
+
     .pick-footer {
-      margin-top: 6%;
+      margin-top: 5%;
       text-align: center;
-      padding: 0 10%;
+      padding: 0 8%;
     }
 
-    /* Generic instruction text */
     .pick-instruction {
       font-family: 'Open Sans', sans-serif;
-      font-size: clamp(0.78rem, 2.2vw, 0.88rem);
+      font-size: clamp(0.75rem, 2vw, 0.85rem);
       font-weight: 400;
-      color: rgba(226,201,138,0.75);
+      color: rgba(226,201,138,0.70);
       text-align: center;
-      line-height: 1.5;
-      letter-spacing: 0.02em;
+      line-height: 1.6;
+    }
+
+    /* Watermark — bottom of pick screen only */
+    .pick-watermark {
+      position: absolute;
+      bottom: 10px;
+      left: 0; right: 0;
+      text-align: center;
+      font-family: 'Open Sans', sans-serif;
+      font-size: 9px;
+      color: rgba(200,169,110,0.30);
+      letter-spacing: 0.03em;
+      padding: 0 12px;
+      line-height: 1.4;
+      pointer-events: none;
     }
 
     /* ══════════════════════════════════════════════════
@@ -373,10 +390,10 @@
       z-index: 5;
     }
 
-    /* NEXT button — appears after flip */
+    /* NEXT button — appears after flip, pushed to bottom */
     .next-btn-wrap {
       position: absolute;
-      bottom: 6%;
+      bottom: 3%;
       left: 0; right: 0;
       display: none;
       justify-content: center;
@@ -387,8 +404,8 @@
     /* Back to pick */
     .card-back-btn {
       position: absolute;
-      top: 4%;
-      left: 5%;
+      top: 3%;
+      left: 4%;
       z-index: 10;
       background: rgba(200,169,110,0.18);
       border: 1px solid rgba(200,169,110,0.40);
@@ -403,6 +420,30 @@
       letter-spacing: 0.05em;
     }
     .card-back-btn:hover { background: rgba(200,169,110,0.32); }
+
+    /* ══════════════════════════════════════════════════
+       MOBILE RESPONSIVE
+       On small screens: fill full viewport exactly
+       9:16 container becomes the full screen
+    ══════════════════════════════════════════════════ */
+    @media (max-width: 480px) {
+      body {
+        align-items: flex-start;
+        justify-content: flex-start;
+        background: #1a0835;
+        padding: 0;
+        margin: 0;
+      }
+      .device {
+        width: 100vw !important;
+        height: 100dvh !important;
+        border-radius: 0 !important;
+        box-shadow: none !important;
+        aspect-ratio: unset !important;
+        min-width: unset !important;
+        min-height: unset !important;
+      }
+    }
 
     /* ══════════════════════════════════════════════════
        SCREEN: FINALE
@@ -482,6 +523,8 @@
     <div class="pick-footer">
       <p class="pick-instruction">Go ahead — choose any number<br>to see your results</p>
     </div>
+
+    <p class="pick-watermark">Designed &amp; built with ❤️ by Claude (Anthropic) × Chef Anica · 3C Thread To Success Cooking Lab 🧪👨‍🍳</p>
 
   </div>
 
@@ -606,9 +649,10 @@
     if (isVideo(url)) {
       const v       = document.createElement('video');
       v.autoplay    = true;
-      v.muted       = true;
+      v.muted       = false; // audio on
       v.loop        = true;
       v.playsInline = true;
+      v.controls    = false;
       const s = document.createElement('source');
       s.src   = url;
       s.type  = 'video/mp4';
@@ -622,6 +666,28 @@
     }
   }
 
+  /* ── GOLD COIN CLICK SOUND (Web Audio API) ──────── */
+  /*
+    Generates a gold coin "ding" sound programmatically.
+    No external audio file needed.
+  */
+  function playClickSound() {
+    try {
+      const ctx  = new (window.AudioContext || window.webkitAudioContext)();
+      const osc  = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.type      = 'sine';
+      osc.frequency.setValueAtTime(880, ctx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(440, ctx.currentTime + 0.15);
+      gain.gain.setValueAtTime(0.35, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.25);
+      osc.start(ctx.currentTime);
+      osc.stop(ctx.currentTime + 0.25);
+    } catch (e) { /* silent fallback if audio not supported */ }
+  }
+
   /* ── BUILD NUMBER GRID ──────────────────────────── */
   function buildNumberGrid(cards) {
     const topEl = document.getElementById('numGridTop');
@@ -631,12 +697,21 @@
     cards.forEach((card, i) => {
       const btn = document.createElement('button');
       btn.className = 'num-btn';
+
+      // Support custom Canva button image per card
+      if (card.buttonImage) {
+        btn.style.backgroundImage = `url(${card.buttonImage})`;
+        btn.style.backgroundSize  = 'cover';
+        btn.style.backgroundPosition = 'center';
+        btn.classList.add('has-image');
+      }
+
       btn.innerHTML = `<span>${card.id}</span>`;
       btn.addEventListener('click', () => {
-        // Visual highlight
+        playClickSound();
         document.querySelectorAll('.num-btn').forEach(b => b.classList.remove('selected'));
         btn.classList.add('selected');
-        setTimeout(() => selectCard(card), 180);
+        setTimeout(() => selectCard(card), 220);
       });
       if (i < 4) topEl.appendChild(btn);
       else        botEl.appendChild(btn);
@@ -683,7 +758,7 @@
     if (isVideo(url)) {
       const v       = document.createElement('video');
       v.autoplay    = true;
-      v.muted       = true;
+      v.muted       = false; // audio on
       v.loop        = true;
       v.playsInline = true;
       const s = document.createElement('source');
