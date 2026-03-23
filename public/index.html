@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
-  <title>3C Card Deck</title>
+  <title>3C Card Game Deck</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Open+Sans:wght@400;600;700&display=swap" rel="stylesheet" />
@@ -47,9 +47,9 @@
     /* Mobile: Keep 9:16 container with borders visible */
     @media (max-width: 480px) {
       .device {
-        width: 100vw;
+        width: 95vw;
         height: auto;
-        max-height: 100vh;
+        max-height: 95vh;
         aspect-ratio: 9 / 16;
       }
     }
@@ -248,10 +248,18 @@
       text-align: center;
     }
 
-    /* Number grids — centred */
+    /* Number grids — centred (3-3-1 layout) */
     .number-grid-top {
       display: grid;
-      grid-template-columns: repeat(4, 1fr);
+      grid-template-columns: repeat(3, 1fr);
+      gap: clamp(10px, 3%, 14px);
+      width: 100%;
+      max-width: 280px;
+      margin-bottom: clamp(10px, 3%, 14px);
+    }
+    .number-grid-middle {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
       gap: clamp(10px, 3%, 14px);
       width: 100%;
       max-width: 280px;
@@ -511,8 +519,9 @@
         <p class="pick-prompt">PRESS A NUMBER</p>
       </div>
 
-      <!-- 4 top, 3 bottom centred -->
+      <!-- 3-3-1 layout: buttons 1-3, 4-6, 7 -->
       <div class="number-grid-top"    id="numGridTop"></div>
+      <div class="number-grid-middle" id="numGridMiddle"></div>
       <div class="number-grid-bottom" id="numGridBottom"></div>
 
       <div class="pick-footer">
@@ -652,7 +661,7 @@
     if (isVideo(url)) {
       const v       = document.createElement('video');
       v.autoplay    = true;
-      v.muted       = false; // audio on
+      v.muted       = true; // muted initially to allow autoplay
       v.loop        = true;
       v.playsInline = true;
       v.controls    = false;
@@ -661,6 +670,10 @@
       s.type  = 'video/mp4';
       v.appendChild(s);
       wrap.appendChild(v);
+      // Unmute after video starts playing
+      v.addEventListener('playing', () => {
+        v.muted = false;
+      }, { once: true });
     } else {
       const img = document.createElement('img');
       img.src   = url;
@@ -694,6 +707,7 @@
   /* ── BUILD NUMBER GRID ──────────────────────────── */
   function buildNumberGrid(cards) {
     const topEl = document.getElementById('numGridTop');
+    const midEl = document.getElementById('numGridMiddle');
     const botEl = document.getElementById('numGridBottom');
     if (topEl.children.length > 0) return;
 
@@ -716,8 +730,10 @@
         btn.classList.add('selected');
         setTimeout(() => selectCard(card), 220);
       });
-      if (i < 4) topEl.appendChild(btn);
-      else        botEl.appendChild(btn);
+      // 3-3-1 layout: 1-3 top, 4-6 middle, 7 bottom
+      if (i < 3) topEl.appendChild(btn);
+      else if (i < 6) midEl.appendChild(btn);
+      else botEl.appendChild(btn);
     });
   }
 
