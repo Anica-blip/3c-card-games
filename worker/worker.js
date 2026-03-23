@@ -234,11 +234,11 @@ export default {
           intro, finale, card fronts, card backs
     */
     const mediaMatch = url.pathname.match(
-      /^\/media\/([a-z0-9.\-]+)\/([a-z0-9.\-_]+)$/i
+      /^\/media\/([a-z0-9.\-]+)\/(.+)$/i
     );
     if (mediaMatch) {
       const slug     = mediaMatch[1];
-      const filename = mediaMatch[2];
+      const filename = decodeURIComponent(mediaMatch[2]);
 
       if (method !== 'PUT') {
         return respond(
