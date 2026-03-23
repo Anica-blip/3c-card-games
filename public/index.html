@@ -6,11 +6,11 @@
   <title>Aurion's Lucky Wisdom Deck</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Lato:wght@300;400;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Open+Sans:wght@400;600;700&display=swap" rel="stylesheet" />
   <link rel="icon" href="data:," />
 
   <style>
-    /* ── RESET ──────────────────────────────────── */
+    /* ── RESET ──────────────────────────────────────── */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     html, body { width: 100%; height: 100%; }
 
@@ -20,11 +20,16 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      font-family: 'Lato', sans-serif;
+      font-family: 'Open Sans', sans-serif;
       overflow: hidden;
     }
 
-    /* ── 9:16 PORTRAIT CONTAINER ────────────────── */
+    /* ══════════════════════════════════════════════════
+       THE DEVICE FRAME
+       This never changes — same container on every screen.
+       9:16 portrait, gold border, rounded corners.
+       All screens sit inside this frame.
+    ══════════════════════════════════════════════════ */
     .device {
       position: relative;
       width: min(390px, 56.25vh);
@@ -34,12 +39,13 @@
       border-radius: clamp(0px, 2vw, 28px);
       overflow: hidden;
       box-shadow:
-        0 0 0 1.5px rgba(200,169,110,0.35),
-        0 30px 80px rgba(0,0,0,0.6);
+        0 0 0 2px rgba(200,169,110,0.6),
+        0 0 0 4px rgba(200,169,110,0.15),
+        0 30px 80px rgba(0,0,0,0.7);
     }
 
     @media (max-width: 480px) {
-      body { align-items: flex-start; background: #3B1265; }
+      body { align-items: flex-start; background: #1a0835; }
       .device {
         width: 100vw;
         height: 100dvh;
@@ -49,7 +55,7 @@
       }
     }
 
-    /* ── SCREENS ─────────────────────────────────── */
+    /* ── SCREENS ─────────────────────────────────────── */
     .screen {
       position: absolute;
       inset: 0;
@@ -69,7 +75,10 @@
       pointer-events: none;
     }
 
-    /* ── MEDIA FILL ──────────────────────────────── */
+    /* ── MEDIA FILL (image or video fills frame) ───────
+       Used on: Intro, Card front/back, Finale
+       object-fit:cover — always fills, never distorts
+    ─────────────────────────────────────────────────── */
     .media-wrap {
       position: absolute;
       inset: 0;
@@ -84,16 +93,20 @@
       position: absolute;
       inset: 0;
     }
+
+    /* Soft gradient so buttons stay readable */
     .media-overlay {
       position: absolute;
       inset: 0;
       background: linear-gradient(
         to bottom,
-        rgba(20,4,50,0.08) 0%,
-        rgba(20,4,50,0.55) 100%
+        rgba(20,4,50,0.05) 0%,
+        rgba(20,4,50,0.60) 100%
       );
       z-index: 1;
     }
+
+    /* Content layer — sits above media */
     .media-content {
       position: relative;
       z-index: 2;
@@ -106,58 +119,63 @@
       padding-bottom: 8%;
     }
 
-    /* ── BUTTONS ─────────────────────────────────── */
+    /* ── BUTTONS ─────────────────────────────────────── */
+    /* Gold pill — used on Intro (LET'S GO), card NEXT */
     .btn-gold {
       font-family: 'Cinzel', serif;
-      font-size: clamp(0.85rem, 2.5vw, 1.05rem);
+      font-size: clamp(0.85rem, 2.5vw, 1rem);
       font-weight: 700;
       letter-spacing: 0.18em;
       color: #3B1265;
       background: linear-gradient(135deg, #E2C98A, #C8A96E);
       border: none;
       border-radius: 50px;
-      padding: 14px 48px;
+      padding: 14px 52px;
       cursor: pointer;
-      box-shadow: 0 4px 24px rgba(200,169,110,0.45);
-      transition: transform 0.18s ease, box-shadow 0.18s ease;
+      box-shadow: 0 4px 24px rgba(200,169,110,0.5);
+      transition: transform 0.16s ease, box-shadow 0.16s ease;
     }
-    .btn-gold:hover  { transform: translateY(-2px); box-shadow: 0 8px 32px rgba(200,169,110,0.6); }
-    .btn-gold:active { transform: scale(0.97); }
+    .btn-gold:hover  { transform: translateY(-2px); box-shadow: 0 8px 32px rgba(200,169,110,0.65); }
+    .btn-gold:active { transform: scale(0.96); }
 
+    /* Gold outline — used on finale BACK / CLOSE */
     .btn-outline {
       font-family: 'Cinzel', serif;
-      font-size: clamp(0.8rem, 2.2vw, 0.95rem);
+      font-size: clamp(0.8rem, 2.2vw, 0.92rem);
       font-weight: 700;
       letter-spacing: 0.15em;
       color: #E2C98A;
-      background: transparent;
+      background: rgba(200,169,110,0.10);
       border: 1.5px solid rgba(200,169,110,0.55);
       border-radius: 50px;
       padding: 12px 36px;
       cursor: pointer;
-      transition: transform 0.18s ease, border-color 0.18s;
+      transition: transform 0.16s ease, border-color 0.16s, background 0.16s;
     }
-    .btn-outline:hover { transform: translateY(-2px); border-color: #C8A96E; }
+    .btn-outline:hover {
+      transform: translateY(-2px);
+      border-color: #C8A96E;
+      background: rgba(200,169,110,0.20);
+    }
 
-    /* ── SCREEN: LOADING ─────────────────────────── */
+    /* ── LOADING ─────────────────────────────────────── */
     #screen-loading {
       background: #1a0835;
-      gap: 16px;
     }
     .loading-text {
       font-family: 'Cinzel', serif;
       color: #C8A96E;
-      font-size: clamp(0.75rem, 2vw, 0.9rem);
+      font-size: clamp(0.75rem, 2vw, 0.88rem);
       letter-spacing: 0.12em;
       animation: pulse 1.8s ease-in-out infinite;
     }
 
-    /* ── SCREEN: ERROR ───────────────────────────── */
+    /* ── ERROR ───────────────────────────────────────── */
     #screen-error {
       background: #1a0835;
       padding: 32px;
       text-align: center;
-      gap: 16px;
+      gap: 14px;
     }
     #screen-error strong {
       font-family: 'Cinzel', serif;
@@ -165,110 +183,168 @@
       font-size: clamp(0.85rem, 2.5vw, 1rem);
     }
     #screen-error p {
-      color: rgba(255,255,255,0.6);
-      font-size: clamp(0.75rem, 2vw, 0.88rem);
+      color: rgba(255,255,255,0.55);
+      font-size: clamp(0.75rem, 2vw, 0.85rem);
       line-height: 1.6;
     }
 
-    /* ── SCREEN: INTRO ───────────────────────────── */
+    /* ══════════════════════════════════════════════════
+       SCREEN: INTRO
+       Full media fill — same as landing page feel
+       Button: LET'S GO at bottom
+    ══════════════════════════════════════════════════ */
     #screen-intro {
       background: radial-gradient(ellipse at center, #5A2090 0%, #1a0835 100%);
     }
 
-    /* ── SCREEN: PICK ────────────────────────────── */
+    /* ══════════════════════════════════════════════════
+       SCREEN: PICK A NUMBER
+       Purple branded background (not media fill)
+       Square neon gold number buttons
+       Same frame — branded content inside
+    ══════════════════════════════════════════════════ */
     #screen-pick {
-      background: #3B1265;
-      padding: 6% 6% 5%;
+      background: #2D0F55;
       justify-content: flex-start;
+      padding: 5% 6% 4%;
+      gap: 0;
     }
+
     .pick-logo {
-      width: clamp(36px, 10%, 52px);
-      margin-top: 4%;
-      margin-bottom: 3%;
+      width: clamp(32px, 8%, 44px);
+      margin-top: 3%;
+      margin-bottom: 2%;
     }
+
     .pick-brand {
       font-family: 'Cinzel', serif;
-      font-size: clamp(0.6rem, 1.8vw, 0.75rem);
+      font-size: clamp(0.55rem, 1.6vw, 0.7rem);
       color: #00D4FF;
       letter-spacing: 0.12em;
-      margin-bottom: 6%;
+      margin-bottom: 5%;
       text-align: center;
     }
+
+    /* PRESS A NUMBER pill */
     .pick-prompt-wrap {
-      background: rgba(200,169,110,0.18);
+      background: rgba(200,169,110,0.14);
       border: 1.5px solid #C8A96E;
       border-radius: 50px;
-      padding: clamp(8px, 2%, 14px) clamp(24px, 8%, 40px);
-      margin-bottom: 7%;
+      padding: clamp(8px, 2%, 12px) clamp(20px, 7%, 36px);
+      margin-bottom: 6%;
     }
     .pick-prompt {
       font-family: 'Cinzel', serif;
-      font-size: clamp(0.85rem, 2.8vw, 1.05rem);
+      font-size: clamp(0.82rem, 2.6vw, 1rem);
       font-weight: 700;
       color: #00D4FF;
       letter-spacing: 0.15em;
       text-align: center;
     }
+
+    /* Number grids */
     .number-grid-top {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
-      gap: clamp(8px, 3%, 14px);
+      gap: clamp(10px, 3%, 16px);
       width: 100%;
-      max-width: 320px;
-      margin-bottom: clamp(8px, 3%, 14px);
+      max-width: 300px;
+      margin-bottom: clamp(10px, 3%, 16px);
     }
     .number-grid-bottom {
       display: flex;
       justify-content: center;
-      gap: clamp(8px, 3%, 14px);
+      gap: clamp(10px, 3%, 16px);
       width: 100%;
-      max-width: 320px;
+      max-width: 300px;
     }
+
+    /* ── SQUARE NUMBER BUTTONS ────────────────────────
+       Square, not rounded. Neon glow on hover/active.
+       Gold number on cyan background — same brand palette.
+    ─────────────────────────────────────────────────── */
     .num-btn {
-      width: clamp(56px, 16vw, 68px);
-      height: clamp(56px, 16vw, 68px);
-      background: #00D4FF;
-      border: none;
-      border-radius: clamp(12px, 4vw, 18px);
+      width: clamp(58px, 16vw, 66px);
+      height: clamp(58px, 16vw, 66px);
+      background: rgba(0,212,255,0.12);
+      border: 2px solid rgba(0,212,255,0.50);
+      border-radius: 10px; /* slight rounding — feels mobile-native */
       font-family: 'Cinzel', serif;
-      font-size: clamp(1.4rem, 5vw, 2rem);
+      font-size: clamp(1.4rem, 5vw, 1.9rem);
       font-weight: 900;
       color: #C8A96E;
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
-      box-shadow: 0 4px 16px rgba(0,212,255,0.25);
-      transition: transform 0.16s ease, box-shadow 0.16s ease;
-      background-size: cover;
-      background-position: center;
+      transition: all 0.16s ease;
+      position: relative;
       overflow: hidden;
     }
-    .num-btn:hover  { transform: translateY(-3px) scale(1.07); box-shadow: 0 8px 28px rgba(0,212,255,0.5); }
-    .num-btn:active { transform: scale(0.95); }
-    .num-btn.has-image span { display: none; }
-    .pick-footer { margin-top: 7%; text-align: center; }
+
+    /* Neon glow idle */
+    .num-btn {
+      box-shadow:
+        0 0 8px rgba(0,212,255,0.20),
+        inset 0 0 8px rgba(0,212,255,0.05);
+    }
+
+    /* Hover — brighter glow */
+    .num-btn:hover {
+      background: rgba(0,212,255,0.22);
+      border-color: #00D4FF;
+      color: #E2C98A;
+      box-shadow:
+        0 0 18px rgba(0,212,255,0.55),
+        0 0 36px rgba(0,212,255,0.20),
+        inset 0 0 12px rgba(0,212,255,0.12);
+      transform: translateY(-2px);
+    }
+
+    /* Active / selected — full neon highlight */
+    .num-btn:active,
+    .num-btn.selected {
+      background: rgba(0,212,255,0.35);
+      border-color: #00D4FF;
+      color: #fff;
+      box-shadow:
+        0 0 24px rgba(0,212,255,0.8),
+        0 0 48px rgba(0,212,255,0.35),
+        inset 0 0 16px rgba(0,212,255,0.20);
+      transform: scale(0.95);
+    }
+
+    .pick-footer {
+      margin-top: 6%;
+      text-align: center;
+    }
     .pick-title-block {
       font-family: 'Cinzel', serif;
       color: #C8A96E;
-      font-size: clamp(0.8rem, 2.5vw, 1rem);
-      letter-spacing: 0.12em;
+      font-size: clamp(0.75rem, 2.2vw, 0.92rem);
+      letter-spacing: 0.1em;
     }
     .pick-title-block span {
       display: block;
-      font-family: 'Lato', sans-serif;
-      font-size: clamp(0.85rem, 2.8vw, 1.05rem);
-      font-weight: 700;
-      color: #fff;
+      font-family: 'Open Sans', sans-serif;
+      font-size: clamp(0.82rem, 2.5vw, 1rem);
+      font-weight: 600;
+      color: rgba(255,255,255,0.85);
       letter-spacing: 0;
       margin-top: 4px;
     }
 
-    /* ── SCREEN: CARD ────────────────────────────── */
+    /* ══════════════════════════════════════════════════
+       SCREEN: CARD (FRONT → TAP → FLIP → BACK)
+       Card fills entire frame — no background visible
+       Tap hint pulses until flip
+       NEXT button appears after flip
+    ══════════════════════════════════════════════════ */
     #screen-card {
-      background: #000;
+      background: #0a0614;
       perspective: 1200px;
     }
+
     .card-scene {
       width: 100%;
       height: 100%;
@@ -278,6 +354,7 @@
       cursor: pointer;
     }
     .card-scene.flipped { transform: rotateY(180deg); }
+
     .card-face {
       position: absolute;
       inset: 0;
@@ -293,21 +370,25 @@
       display: block;
       pointer-events: none;
     }
-    .card-face-front { background: radial-gradient(ellipse at center, #5A2090 0%, #2a0856 100%); }
-    .card-face-back  { background: radial-gradient(ellipse at center, #3B1265 0%, #1a0835 100%); transform: rotateY(180deg); }
+    .card-face-front { background: #2a0856; }
+    .card-face-back  { background: #1a0835; transform: rotateY(180deg); }
+
+    /* Tap hint */
     .tap-hint {
       position: absolute;
       bottom: 6%;
       left: 0; right: 0;
       text-align: center;
-      font-family: 'Lato', sans-serif;
-      font-size: clamp(0.7rem, 2vw, 0.82rem);
-      color: rgba(255,255,255,0.55);
+      font-family: 'Open Sans', sans-serif;
+      font-size: clamp(0.68rem, 1.8vw, 0.8rem);
+      color: rgba(255,255,255,0.50);
       letter-spacing: 0.1em;
       animation: pulse 2.2s ease-in-out infinite;
       pointer-events: none;
       z-index: 5;
     }
+
+    /* NEXT button — appears after flip */
     .next-btn-wrap {
       position: absolute;
       bottom: 6%;
@@ -317,28 +398,36 @@
       z-index: 5;
     }
     .next-btn-wrap.visible { display: flex; }
+
+    /* Back to pick */
     .card-back-btn {
       position: absolute;
       top: 4%;
       left: 5%;
       z-index: 10;
-      background: rgba(200,169,110,0.22);
-      border: 1px solid rgba(200,169,110,0.45);
+      background: rgba(200,169,110,0.18);
+      border: 1px solid rgba(200,169,110,0.40);
       border-radius: 50px;
       padding: 6px 16px;
-      font-family: 'Lato', sans-serif;
-      font-size: clamp(0.7rem, 2vw, 0.8rem);
+      font-family: 'Open Sans', sans-serif;
+      font-size: clamp(0.68rem, 1.8vw, 0.78rem);
+      font-weight: 600;
       color: #E2C98A;
       cursor: pointer;
-      transition: background 0.2s;
-      letter-spacing: 0.06em;
+      transition: background 0.18s;
+      letter-spacing: 0.05em;
     }
-    .card-back-btn:hover { background: rgba(200,169,110,0.38); }
+    .card-back-btn:hover { background: rgba(200,169,110,0.32); }
 
-    /* ── SCREEN: FINALE ──────────────────────────── */
+    /* ══════════════════════════════════════════════════
+       SCREEN: FINALE
+       Video fills frame
+       BACK (to intro) + CLOSE buttons at bottom
+    ══════════════════════════════════════════════════ */
     #screen-finale {
-      background: radial-gradient(ellipse at center, #5A2090 0%, #1a0835 100%);
+      background: #1a0835;
     }
+
     .finale-buttons {
       display: flex;
       gap: 14px;
@@ -346,46 +435,49 @@
       justify-content: center;
     }
 
+    /* ── ANIMATIONS ──────────────────────────────────── */
     @keyframes pulse {
-      0%, 100% { opacity: 0.35; }
-      50%       { opacity: 0.9; }
+      0%, 100% { opacity: 0.3; }
+      50%       { opacity: 0.85; }
     }
+
   </style>
 </head>
 <body>
 
 <div class="device" id="device">
 
-  <!-- ── LOADING ──────────────────────────────────── -->
+  <!-- ── LOADING ────────────────────────────────────── -->
   <div class="screen active" id="screen-loading">
     <span class="loading-text">Loading…</span>
   </div>
 
-  <!-- ── ERROR ────────────────────────────────────── -->
+  <!-- ── ERROR ──────────────────────────────────────── -->
   <div class="screen" id="screen-error">
     <strong>Deck not found</strong>
     <p>This link may be invalid<br>or the deck has been removed.</p>
   </div>
 
-  <!-- ══════════════════════════════════════════════
-       SCREEN 1 — INTRO
-       Reads: deck.intro (image or video URL)
-       User sees the intro media, clicks LET'S START
-  ══════════════════════════════════════════════ -->
+  <!-- ════════════════════════════════════════════════
+       INTRO SCREEN
+       Media fills frame — same container, same gold border
+       Button: LET'S GO
+  ════════════════════════════════════════════════ -->
   <div class="screen" id="screen-intro">
     <div class="media-wrap"    id="introMediaWrap"></div>
     <div class="media-overlay"></div>
     <div class="media-content">
-      <button class="btn-gold" id="btnStart">LET'S START</button>
+      <button class="btn-gold" id="btnStart">LET'S GO</button>
     </div>
   </div>
 
-  <!-- ══════════════════════════════════════════════
-       SCREEN 2 — PICK A NUMBER
-       Reads: deck.cards (id only, to build buttons)
-       Buttons built once when screen first activates
-  ══════════════════════════════════════════════ -->
+  <!-- ════════════════════════════════════════════════
+       PICK A NUMBER SCREEN
+       Branded purple — square neon number buttons
+       Same frame, same gold border
+  ════════════════════════════════════════════════ -->
   <div class="screen" id="screen-pick">
+
     <img
       class="pick-logo"
       src="https://files.3c-public-library.org/CardGames/logo.png"
@@ -393,48 +485,58 @@
       onerror="this.style.display='none'"
     />
     <p class="pick-brand">3C Thread To Success</p>
+
     <div class="pick-prompt-wrap">
       <p class="pick-prompt">PRESS A NUMBER</p>
     </div>
+
+    <!-- 4 top, 3 bottom centred -->
     <div class="number-grid-top"    id="numGridTop"></div>
     <div class="number-grid-bottom" id="numGridBottom"></div>
+
     <div class="pick-footer">
       <div class="pick-title-block" id="pickTitle">
         AURION'S
         <span id="pickSubTitle">Lucky Wisdom Deck Cards</span>
       </div>
     </div>
+
   </div>
 
-  <!-- ══════════════════════════════════════════════
-       SCREEN 3+4 — CARD
-       Reads: deck.cards[n].front on card select
-       Reads: deck.cards[n].back  on flip
-       Nothing else is read on this screen
-  ══════════════════════════════════════════════ -->
+  <!-- ════════════════════════════════════════════════
+       CARD SCREEN
+       Card front fills frame → tap → flips to back
+       NEXT appears after flip
+  ════════════════════════════════════════════════ -->
   <div class="screen" id="screen-card">
+
     <button class="card-back-btn" id="btnPickAgain">← Pick Again</button>
+
     <div class="card-scene" id="cardScene">
       <div class="card-face card-face-front" id="cardFront"></div>
       <div class="card-face card-face-back"  id="cardBack"></div>
     </div>
-    <div class="tap-hint"     id="tapHint">TAP CARD TO REVEAL</div>
+
+    <div class="tap-hint"      id="tapHint">TAP CARD TO REVEAL</div>
+
     <div class="next-btn-wrap" id="nextBtnWrap">
       <button class="btn-gold" id="btnNext">NEXT →</button>
     </div>
+
   </div>
 
-  <!-- ══════════════════════════════════════════════
-       SCREEN 5 — FINALE
-       Reads: deck.finale (image or video URL)
-       Loaded only when this screen activates
-  ══════════════════════════════════════════════ -->
+  <!-- ════════════════════════════════════════════════
+       FINALE SCREEN
+       Video fills frame — two buttons at bottom
+       BACK → returns to intro
+       CLOSE → closes / returns to landing
+  ════════════════════════════════════════════════ -->
   <div class="screen" id="screen-finale">
     <div class="media-wrap"    id="finaleMediaWrap"></div>
     <div class="media-overlay"></div>
     <div class="media-content">
       <div class="finale-buttons">
-        <button class="btn-gold"    id="btnRestart">START AGAIN</button>
+        <button class="btn-gold"    id="btnRestart">BACK</button>
         <button class="btn-outline" id="btnClose">CLOSE</button>
       </div>
     </div>
@@ -446,43 +548,26 @@
 /* ══════════════════════════════════════════════════
    3C Card Games — Public App
    ──────────────────────────────────────────────────
+   ONE JSON fetched once → stored in memory as `deck`
+   Each screen reads ONLY its own section on activate:
 
-   ONE JSON file is fetched once on load and stored
-   in memory as `deck`. Each screen then reads ONLY
-   its own section from that object — nothing more.
-
-   JSON structure:
-   {
-     "slug":   "deck.01",
-     "title":  "Aurion's Lucky Wisdom Deck",
-     "intro":  "https://...deck.01/intro.png",
-     "finale": "https://...deck.01/finale.png",
-     "cards": [
-       { "id": 1,
-         "front": "https://...deck.01/card-01-front.png",
-         "back":  "https://...deck.01/card-01-back.png" },
-       ...
-     ]
-   }
-
-   Screen → JSON key read:
-     screen-intro   → deck.intro   (media URL only)
-     screen-pick    → deck.cards   (id array only)
-     screen-card    → deck.cards[n].front  (on select)
-                    → deck.cards[n].back   (on flip)
-     screen-finale  → deck.finale  (media URL only)
+   screen-intro   → deck.intro   (image or video URL)
+   screen-pick    → deck.cards[].id (builds buttons)
+   screen-card    → deck.cards[n].front (on select)
+                  → deck.cards[n].back  (on flip)
+   screen-finale  → deck.finale  (image or video URL)
 ══════════════════════════════════════════════════ */
 
   const R2_PUBLIC = 'https://files.3c-public-library.org/CardGames';
 
-  /* ── STATE ────────────────────────────────────── */
-  let deck          = null;   // full JSON — loaded once
-  let selectedCard  = null;   // deck.cards[n]
+  /* ── STATE ──────────────────────────────────────── */
+  let deck          = null;
+  let selectedCard  = null;
   let isFlipped     = false;
-  let finaleLoaded  = false;  // load finale media once only
+  let finaleLoaded  = false;
   let currentScreen = 'screen-loading';
 
-  /* ── HELPERS ──────────────────────────────────── */
+  /* ── HELPERS ────────────────────────────────────── */
   function getDeckSlug() {
     return new URLSearchParams(window.location.search).get('deck');
   }
@@ -491,11 +576,14 @@
     return /\.(mp4|webm|mov|ogg)$/i.test(url || '');
   }
 
-  /* ── SCREEN TRANSITION ────────────────────────── */
+  /* ── SCREEN TRANSITION ──────────────────────────── */
   function goTo(id) {
     const from = document.getElementById(currentScreen);
     const to   = document.getElementById(id);
     if (!from || !to || currentScreen === id) return;
+
+    // Stop any video on the screen we're leaving
+    from.querySelectorAll('video').forEach(v => { v.pause(); });
 
     from.classList.add('fading');
     setTimeout(() => {
@@ -503,34 +591,24 @@
       to.classList.add('active');
       currentScreen = id;
       onScreenActivate(id);
+      // Resume video on screen we're entering
+      to.querySelectorAll('video').forEach(v => { v.play().catch(() => {}); });
     }, 400);
   }
 
-  /* ── SCREEN ACTIVATE — each screen reads its own
-     section from the deck object when it activates.
-     Nothing is read before the screen needs it.
-  ─────────────────────────────────────────────── */
+  /* ── SCREEN ACTIVATE ────────────────────────────── */
   function onScreenActivate(id) {
     switch (id) {
-
-      /* INTRO: reads deck.intro only */
       case 'screen-intro':
         loadMedia('introMediaWrap', deck.intro);
         break;
-
-      /* PICK: reads deck.cards id list only */
       case 'screen-pick':
         buildNumberGrid(deck.cards);
-        document.getElementById('pickSubTitle').textContent = deck.title || 'Lucky Wisdom Deck Cards';
+        document.getElementById('pickSubTitle').textContent =
+          deck.title || 'Lucky Wisdom Deck Cards';
         break;
-
-      /* CARD: nothing loaded here —
-         card front is loaded on selectCard()
-         card back is loaded on flipCard()       */
       case 'screen-card':
         break;
-
-      /* FINALE: reads deck.finale only, once */
       case 'screen-finale':
         if (!finaleLoaded) {
           loadMedia('finaleMediaWrap', deck.finale);
@@ -540,25 +618,20 @@
     }
   }
 
-  /* ── LOAD MEDIA INTO A WRAP CONTAINER ────────── */
-  /*
-    Injects <img> or <video> into the named wrap div.
-    object-fit:cover fills the 9:16 container exactly.
-    Called only when the screen that needs it activates.
-  */
+  /* ── LOAD MEDIA ─────────────────────────────────── */
   function loadMedia(wrapId, url) {
     const wrap = document.getElementById(wrapId);
     if (!wrap || !url || wrap.children.length > 0) return;
 
     if (isVideo(url)) {
-      const v  = document.createElement('video');
+      const v       = document.createElement('video');
       v.autoplay    = true;
       v.muted       = true;
       v.loop        = true;
       v.playsInline = true;
-      const s  = document.createElement('source');
-      s.src    = url;
-      s.type   = 'video/mp4';
+      const s = document.createElement('source');
+      s.src   = url;
+      s.type  = 'video/mp4';
       v.appendChild(s);
       wrap.appendChild(v);
     } else {
@@ -569,25 +642,28 @@
     }
   }
 
-  /* ── BUILD NUMBER GRID ────────────────────────── */
-  /* Reads deck.cards id only — not front/back yet */
+  /* ── BUILD NUMBER GRID ──────────────────────────── */
   function buildNumberGrid(cards) {
     const topEl = document.getElementById('numGridTop');
     const botEl = document.getElementById('numGridBottom');
-    if (topEl.children.length > 0) return; // already built
+    if (topEl.children.length > 0) return;
 
     cards.forEach((card, i) => {
       const btn = document.createElement('button');
       btn.className = 'num-btn';
       btn.innerHTML = `<span>${card.id}</span>`;
-      btn.addEventListener('click', () => selectCard(card));
+      btn.addEventListener('click', () => {
+        // Visual highlight
+        document.querySelectorAll('.num-btn').forEach(b => b.classList.remove('selected'));
+        btn.classList.add('selected');
+        setTimeout(() => selectCard(card), 180);
+      });
       if (i < 4) topEl.appendChild(btn);
       else        botEl.appendChild(btn);
     });
   }
 
-  /* ── SELECT CARD ──────────────────────────────── */
-  /* Reads deck.cards[n].front only */
+  /* ── SELECT CARD ────────────────────────────────── */
   function selectCard(card) {
     selectedCard = card;
     isFlipped    = false;
@@ -597,24 +673,20 @@
     document.getElementById('tapHint').style.display = 'block';
     document.getElementById('nextBtnWrap').classList.remove('visible');
 
-    // Load FRONT face now
     const frontEl = document.getElementById('cardFront');
     frontEl.innerHTML = '';
     loadFaceMedia(frontEl, card.front);
 
-    // Pre-clear back — loaded on flip
     document.getElementById('cardBack').innerHTML = '';
 
     goTo('screen-card');
   }
 
-  /* ── FLIP CARD ────────────────────────────────── */
-  /* Reads deck.cards[n].back only — at flip moment */
+  /* ── FLIP CARD ──────────────────────────────────── */
   function flipCard() {
     if (isFlipped) return;
     isFlipped = true;
 
-    // Load BACK face now (not before)
     const backEl = document.getElementById('cardBack');
     if (backEl.children.length === 0 && selectedCard) {
       loadFaceMedia(backEl, selectedCard.back);
@@ -625,18 +697,18 @@
     document.getElementById('nextBtnWrap').classList.add('visible');
   }
 
-  /* ── LOAD MEDIA INTO A CARD FACE ──────────────── */
+  /* ── LOAD FACE MEDIA ────────────────────────────── */
   function loadFaceMedia(faceEl, url) {
     if (!url) return;
     if (isVideo(url)) {
-      const v  = document.createElement('video');
+      const v       = document.createElement('video');
       v.autoplay    = true;
       v.muted       = true;
       v.loop        = true;
       v.playsInline = true;
-      const s  = document.createElement('source');
-      s.src    = url;
-      s.type   = 'video/mp4';
+      const s = document.createElement('source');
+      s.src   = url;
+      s.type  = 'video/mp4';
       v.appendChild(s);
       faceEl.appendChild(v);
     } else {
@@ -646,7 +718,7 @@
     }
   }
 
-  /* ── RESET ────────────────────────────────────── */
+  /* ── RESET ──────────────────────────────────────── */
   function resetCard() {
     isFlipped    = false;
     selectedCard = null;
@@ -655,14 +727,16 @@
     document.getElementById('cardBack').innerHTML  = '';
     document.getElementById('tapHint').style.display = 'block';
     document.getElementById('nextBtnWrap').classList.remove('visible');
+    // Clear selected highlight
+    document.querySelectorAll('.num-btn').forEach(b => b.classList.remove('selected'));
   }
 
-  /* ── WIRE BUTTONS ─────────────────────────────── */
+  /* ── WIRE BUTTONS ───────────────────────────────── */
   function wireButtons() {
-    // LET'S START → pick screen
+    // Intro → Pick
     document.getElementById('btnStart').onclick = () => goTo('screen-pick');
 
-    // Card scene tap → flip
+    // Card tap → flip
     document.getElementById('cardScene').onclick = flipCard;
 
     // Pick Again
@@ -671,10 +745,10 @@
       goTo('screen-pick');
     };
 
-    // NEXT → finale
+    // NEXT → Finale
     document.getElementById('btnNext').onclick = () => goTo('screen-finale');
 
-    // START AGAIN → intro
+    // BACK → back to Intro
     document.getElementById('btnRestart').onclick = () => {
       resetCard();
       finaleLoaded = false;
@@ -682,7 +756,7 @@
       goTo('screen-intro');
     };
 
-    // CLOSE
+    // CLOSE → close tab / return to landing
     document.getElementById('btnClose').onclick = () => {
       window.close();
       setTimeout(() => {
@@ -692,31 +766,17 @@
     };
   }
 
-  /* ── INIT ─────────────────────────────────────── */
-  /*
-    1. Fetch ONE JSON file
-    2. Store in memory as `deck`
-    3. Wire buttons
-    4. Activate intro screen — which reads deck.intro only
-    Everything else is lazy-loaded per screen.
-  */
+  /* ── INIT ───────────────────────────────────────── */
   async function init() {
     const slug = getDeckSlug();
-    if (!slug) {
-      goTo('screen-error');
-      return;
-    }
+    if (!slug) { goTo('screen-error'); return; }
 
     try {
-      const res = await fetch(
-        `${R2_PUBLIC}/${slug}/deck.json`
-      );
+      const res = await fetch(`${R2_PUBLIC}/${slug}/deck.json`);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       deck = await res.json();
-
       wireButtons();
-      goTo('screen-intro'); // triggers onScreenActivate → loads deck.intro only
-
+      goTo('screen-intro');
     } catch (err) {
       console.error('Deck load failed:', err);
       goTo('screen-error');
