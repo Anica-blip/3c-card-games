@@ -46,11 +46,21 @@
 
     /* Mobile: Keep 9:16 container with borders visible */
     @media (max-width: 480px) {
+      body {
+        align-items: flex-start;
+        justify-content: flex-start;
+        background: #1a0835;
+        padding: 0;
+        margin: 0;
+      }
       .device {
-        width: 95vw;
-        height: auto;
-        max-height: 95vh;
-        aspect-ratio: 9 / 16;
+        width: 100vw !important;
+        height: 100dvh !important;
+        border-radius: 0 !important;
+        box-shadow: none !important;
+        aspect-ratio: unset !important;
+        min-width: unset !important;
+        min-height: unset !important;
       }
     }
 
@@ -612,10 +622,8 @@
     const to   = document.getElementById(id);
     if (!from || !to || currentScreen === id) return;
 
-    // Pause videos on the screen we're leaving
-    from.querySelectorAll('video').forEach(v => { 
-      v.pause();
-    });
+    // Stop any video on the screen we're leaving
+    from.querySelectorAll('video').forEach(v => { v.pause(); });
 
     from.classList.add('fading');
     setTimeout(() => {
@@ -623,21 +631,8 @@
       to.classList.add('active');
       currentScreen = id;
       onScreenActivate(id);
-      
-      // Play videos on screen we're entering (after a small delay to ensure they're loaded)
-      setTimeout(() => {
-        to.querySelectorAll('video').forEach(v => { 
-          const playPromise = v.play();
-          if (playPromise !== undefined) {
-            playPromise.then(() => {
-              // Unmute if it was muted
-              if (v.muted) {
-                setTimeout(() => { v.muted = false; }, 100);
-              }
-            }).catch(() => {});
-          }
-        });
-      }, 100);
+      // Resume video on screen we're entering
+      to.querySelectorAll('video').forEach(v => { v.play().catch(() => {}); });
     }, 400);
   }
 
@@ -645,11 +640,7 @@
   function onScreenActivate(id) {
     switch (id) {
       case 'screen-intro':
-        // Always load intro media when screen activates
-        const introWrap = document.getElementById('introMediaWrap');
-        if (introWrap && introWrap.children.length === 0) {
-          loadMedia('introMediaWrap', deck.intro);
-        }
+        loadMedia('introMediaWrap', deck.intro);
         break;
       case 'screen-pick':
         buildNumberGrid(deck.cards);
@@ -668,19 +659,12 @@
   /* ── LOAD MEDIA ─────────────────────────────────── */
   function loadMedia(wrapId, url) {
     const wrap = document.getElementById(wrapId);
-    if (!wrap || !url) return;
-
-    // Clear existing content before loading new media
-    if (wrap.children.length > 0) return;
+    if (!wrap || !url || wrap.children.length > 0) return;
 
     if (isVideo(url)) {
-      // Check if this video was preloaded from landing page
-      const preloadedUrl = sessionStorage.getItem('introVideoPreloaded');
-      const isPreloaded = (wrapId === 'introMediaWrap' && preloadedUrl === url);
-      
       const v       = document.createElement('video');
       v.autoplay    = true;
-      v.muted       = isPreloaded ? false : true; // Start with sound if preloaded
+      v.muted       = false; // audio on
       v.loop        = true;
       v.playsInline = true;
       v.controls    = false;
@@ -689,33 +673,6 @@
       s.type  = 'video/mp4';
       v.appendChild(s);
       wrap.appendChild(v);
-      
-      if (isPreloaded) {
-        // Video was preloaded, clear the flag and play with sound immediately
-        sessionStorage.removeItem('introVideoPreloaded');
-        v.addEventListener('loadeddata', () => {
-          v.play().catch(() => {
-            // If autoplay with sound fails, mute and try again
-            v.muted = true;
-            v.play().then(() => {
-              setTimeout(() => { v.muted = false; }, 100);
-            });
-          });
-        }, { once: true });
-      } else {
-        // Not preloaded, use the standard muted approach
-        v.addEventListener('loadedmetadata', () => {
-          const playPromise = v.play();
-          if (playPromise !== undefined) {
-            playPromise.then(() => {
-              // Video started playing, unmute it
-              setTimeout(() => { v.muted = false; }, 100);
-            }).catch(() => {
-              // Autoplay failed, keep muted
-            });
-          }
-        });
-      }
     } else {
       const img = document.createElement('img');
       img.src   = url;
