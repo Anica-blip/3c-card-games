@@ -21,20 +21,21 @@ const PUBLIC_APP    = 'https://anica-blip.github.io/3c-card-games/landing.html';
 const $  = (sel) => document.querySelector(sel);
 
 /* ── STATE ──────────────────────────────────────────── */
-let deckArchive    = [];   // all decks from Supabase
+let deckArchive    = [];
 let DECK_SLUG      = null;
 let DECK_TITLE     = '';
 let DECK_URL       = '';
-let selectedCardIdx = -1;  // which card is open in editor
+let selectedCardIdx = -1;
+let selectedSlot    = null;  // 'intro' | 'finale' | null
 
 // Current deck in memory
 let deckData = {
   slug:   '',
   title:  '',
-  intro:  { filename: 'intro.png',  localUrl: null, isVideo: false },
-  finale: { filename: 'finale.png', localUrl: null, isVideo: false },
+  intro:  { filename: 'intro.png',  localUrl: null, r2Url: null, isVideo: false },
+  finale: { filename: 'finale.png', localUrl: null, r2Url: null, isVideo: false },
   cards:  []
-  // card shape: { front: { filename, localUrl, isVideo }, back: { filename, localUrl, isVideo } }
+  // card shape: { front: { filename, localUrl, r2Url, isVideo }, back: { filename, localUrl, r2Url, isVideo } }
 };
 
 /* ── HELPERS ────────────────────────────────────────── */
@@ -76,8 +77,8 @@ async function onNewDeck() {
   deckData = {
     slug:   DECK_SLUG,
     title:  '',
-    intro:  { filename: 'intro.png',  localUrl: null, isVideo: false },
-    finale: { filename: 'finale.png', localUrl: null, isVideo: false },
+    intro:  { filename: 'intro.png',  localUrl: null, r2Url: null, isVideo: false },
+    finale: { filename: 'finale.png', localUrl: null, r2Url: null, isVideo: false },
     cards:  []
   };
 
@@ -90,8 +91,8 @@ async function onNewDeck() {
 function onAddCard() {
   const idx = deckData.cards.length;
   deckData.cards.push({
-    front: { filename: cardFilename(idx, 'front'), localUrl: null, isVideo: false },
-    back:  { filename: cardFilename(idx, 'back'),  localUrl: null, isVideo: false }
+    front: { filename: cardFilename(idx, 'front'), localUrl: null, r2Url: null, isVideo: false },
+    back:  { filename: cardFilename(idx, 'back'),  localUrl: null, r2Url: null, isVideo: false }
   });
   selectedCardIdx = deckData.cards.length - 1;
   render();
@@ -140,48 +141,96 @@ function onMoveCardDown(idx) {
 /* ── SELECT CARD ────────────────────────────────────── */
 function onSelectCard(idx) {
   selectedCardIdx = idx;
+  selectedSlot    = null;
   render();
 }
 
-/* ── FILE UPLOAD — LOCAL PREVIEW ONLY ───────────────── */
+/* ── SELECT SLOT (intro / finale) ───────────────────── */
+function onSelectSlot(slot) {
+  selectedSlot    = slot;
+  selectedCardIdx = -1;
+  render();
+}
+
+/* ── UPLOAD FILE TO R2 VIA WORKER ───────────────────── */
 /*
-  Reads the file from disk using createObjectURL.
-  Nothing is sent anywhere — purely for visual preview.
-  The JSON saved to R2 uses the auto-constructed R2 URL.
+  Called immediately when Chef picks a file.
+  Sends binary to PUT /media/:slug/:filename
+  Worker stores it in R2 and returns public_url.
+  That URL is stored in target.r2Url — used in buildDeckJson.
+  Local object URL is stored in target.localUrl — used for preview only.
+  Accepts image/* and video/* — both handled identically.
 */
-function handleUpload(inputEl, target) {
-  /*
-    target is one of:
-      deckData.landing
-      deckData.finale
-      deckData.cards[idx].front
-      deckData.cards[idx].back
-  */
-  const file = inputEl.files[0];
-  if (!file) return;
+async function uploadToR2(file, slug, filename, target, statusEls) {
+  const { nameEl, statusEl } = statusEls;
 
-  // Revoke any previous object URL to free memory
+  if (nameEl) nameEl.textContent = `⏳ Uploading ${file.name}…`;
+
+  // Local preview immediately — doesn't wait for upload
   if (target.localUrl) URL.revokeObjectURL(target.localUrl);
-
   target.localUrl = URL.createObjectURL(file);
   target.isVideo  = file.type.startsWith('video/');
 
-  // Capture real file extension — .png, .jpg, .mp4, .webm etc.
-  // Updates filename so JSON stores the correct R2 URL extension
+  // Capture extension from actual file
   const ext = file.name.split('.').pop().toLowerCase();
-  target.filename = target.filename.replace(/\.[^.]+$/, `.${ext}`);
+  const filenameWithExt = filename.replace(/\.[^.]+$/, `.${ext}`);
+  target.filename = filenameWithExt;
 
+  // Render preview immediately
   render();
+
+  try {
+    const res = await fetch(`${WORKER_URL}/media/${slug}/${filenameWithExt}`, {
+      method:  'PUT',
+      headers: {
+        'Content-Type': file.type || 'application/octet-stream',
+      },
+      body: file,
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error || `Upload error ${res.status}`);
+    }
+
+    const result = await res.json();
+    target.r2Url = result.public_url;
+
+    if (nameEl) nameEl.textContent = `✅ ${filenameWithExt}`;
+    if (statusEl) {
+      statusEl.textContent = '✅ Saved to R2';
+      statusEl.style.color = '#4caf7d';
+    }
+
+  } catch (err) {
+    target.r2Url = null;
+    if (nameEl) nameEl.textContent = `❌ Upload failed — ${file.name}`;
+    if (statusEl) {
+      statusEl.textContent = '❌ Upload failed';
+      statusEl.style.color = '#e05555';
+    }
+    console.error('R2 upload failed:', err.message);
+  }
 }
 
 /* ── WIRE FILE INPUTS AFTER RENDER ──────────────────── */
 function wireUploads() {
+  if (!DECK_SLUG) return;
+
   // Front card upload
   const upFront = $('#uploadFront');
   if (upFront) {
     upFront.onchange = () => {
       if (selectedCardIdx < 0) return;
-      handleUpload(upFront, deckData.cards[selectedCardIdx].front);
+      const card = deckData.cards[selectedCardIdx];
+      const idx  = selectedCardIdx;
+      uploadToR2(
+        upFront.files[0],
+        DECK_SLUG,
+        cardFilename(idx, 'front'),
+        card.front,
+        { nameEl: $('#uploadFrontName'), statusEl: null }
+      );
     };
   }
 
@@ -190,43 +239,78 @@ function wireUploads() {
   if (upBack) {
     upBack.onchange = () => {
       if (selectedCardIdx < 0) return;
-      handleUpload(upBack, deckData.cards[selectedCardIdx].back);
+      const card = deckData.cards[selectedCardIdx];
+      const idx  = selectedCardIdx;
+      uploadToR2(
+        upBack.files[0],
+        DECK_SLUG,
+        cardFilename(idx, 'back'),
+        card.back,
+        { nameEl: $('#uploadBackName'), statusEl: null }
+      );
     };
   }
 
-  // Intro upload
+  // Intro upload — meta row
   const upIntro = $('#uploadIntro');
   if (upIntro) {
-    upIntro.onchange = () => handleUpload(upIntro, deckData.intro);
+    upIntro.onchange = () => uploadToR2(
+      upIntro.files[0], DECK_SLUG, 'intro.png',
+      deckData.intro,
+      { nameEl: $('#uploadIntroName'), statusEl: null }
+    );
   }
 
-  // Finale upload
+  // Intro upload — canvas panel
+  const upIntroCanvas = $('#uploadIntroCanvas');
+  if (upIntroCanvas) {
+    upIntroCanvas.onchange = () => uploadToR2(
+      upIntroCanvas.files[0], DECK_SLUG, 'intro.png',
+      deckData.intro,
+      { nameEl: $('#uploadIntroCanvasName'), statusEl: null }
+    );
+  }
+
+  // Finale upload — meta row
   const upFinale = $('#uploadFinale');
   if (upFinale) {
-    upFinale.onchange = () => handleUpload(upFinale, deckData.finale);
+    upFinale.onchange = () => uploadToR2(
+      upFinale.files[0], DECK_SLUG, 'finale.png',
+      deckData.finale,
+      { nameEl: $('#uploadFinaleName'), statusEl: null }
+    );
+  }
+
+  // Finale upload — canvas panel
+  const upFinaleCanvas = $('#uploadFinaleCanvas');
+  if (upFinaleCanvas) {
+    upFinaleCanvas.onchange = () => uploadToR2(
+      upFinaleCanvas.files[0], DECK_SLUG, 'finale.png',
+      deckData.finale,
+      { nameEl: $('#uploadFinaleCanvasName'), statusEl: null }
+    );
   }
 }
 
 /* ── BUILD DECK JSON FOR SAVING ─────────────────────── */
 /*
-  Local preview URLs are never stored.
-  JSON always uses auto-constructed R2 public URLs.
-  All media is loaded from computer for preview only —
-  filenames are captured from the file and stored as R2 URLs.
-  landing field is left blank here — patched by landing-upload.html.
+  Uses r2Url stored after each file is uploaded to R2.
+  Falls back to auto-constructed URL if not yet uploaded
+  (so slug + filename convention still applies).
+  landing field is patched separately by landing-upload.html.
 */
 function buildDeckJson() {
   const slug = DECK_SLUG;
   return {
     slug,
     title:   DECK_TITLE,
-    landing: '',   // patched by landing-upload.html after R2 upload
-    intro:   r2Url(slug, deckData.intro.filename),
-    finale:  r2Url(slug, deckData.finale.filename),
+    landing: '',   // patched by landing-upload.html
+    intro:   deckData.intro.r2Url  || r2Url(slug, deckData.intro.filename),
+    finale:  deckData.finale.r2Url || r2Url(slug, deckData.finale.filename),
     cards:   deckData.cards.map((c, i) => ({
       id:    i + 1,
-      front: r2Url(slug, c.front.filename),
-      back:  r2Url(slug, c.back.filename)
+      front: c.front.r2Url || r2Url(slug, c.front.filename),
+      back:  c.back.r2Url  || r2Url(slug, c.back.filename)
     }))
   };
 }
@@ -317,11 +401,11 @@ async function onLoadDeckFromArchive(slug) {
     deckData = {
       slug,
       title:  json.title || '',
-      intro:  { filename: `intro.${extFrom(json.intro)}`,   localUrl: null, isVideo: /mp4|webm|mov|ogg/i.test(extFrom(json.intro)) },
-      finale: { filename: `finale.${extFrom(json.finale)}`, localUrl: null, isVideo: /mp4|webm|mov|ogg/i.test(extFrom(json.finale)) },
+      intro:  { filename: `intro.${extFrom(json.intro)}`,   localUrl: null, r2Url: json.intro   || null, isVideo: /mp4|webm|mov|ogg/i.test(extFrom(json.intro)) },
+      finale: { filename: `finale.${extFrom(json.finale)}`, localUrl: null, r2Url: json.finale  || null, isVideo: /mp4|webm|mov|ogg/i.test(extFrom(json.finale)) },
       cards:  (json.cards || []).map((c, i) => ({
-        front: { filename: `card-${pad(i+1)}-front.${extFrom(c.front)}`, localUrl: null, isVideo: /mp4|webm|mov|ogg/i.test(extFrom(c.front)) },
-        back:  { filename: `card-${pad(i+1)}-back.${extFrom(c.back)}`,   localUrl: null, isVideo: /mp4|webm|mov|ogg/i.test(extFrom(c.back)) }
+        front: { filename: `card-${pad(i+1)}-front.${extFrom(c.front)}`, localUrl: null, r2Url: c.front || null, isVideo: /mp4|webm|mov|ogg/i.test(extFrom(c.front)) },
+        back:  { filename: `card-${pad(i+1)}-back.${extFrom(c.back)}`,   localUrl: null, r2Url: c.back  || null, isVideo: /mp4|webm|mov|ogg/i.test(extFrom(c.back)) }
       }))
     };
 
@@ -355,7 +439,7 @@ async function onDeleteDeck(slug) {
       DECK_SLUG  = null;
       DECK_TITLE = '';
       DECK_URL   = '';
-      deckData   = { slug: '', title: '', intro: { filename: 'intro.png', localUrl: null, isVideo: false }, finale: { filename: 'finale.png', localUrl: null, isVideo: false }, cards: [] };
+      deckData = { slug: '', title: '', intro: { filename: 'intro.png', localUrl: null, r2Url: null, isVideo: false }, finale: { filename: 'finale.png', localUrl: null, r2Url: null, isVideo: false }, cards: [] };
       selectedCardIdx = -1;
     }
     await fetchDeckArchive();
@@ -413,51 +497,64 @@ function renderSidebar() {
 function renderCardEditor() {
   const panelEmpty  = $('#panelEmpty');
   const panelEditor = $('#panelEditor');
+  const panelIntro  = $('#panelIntro');
+  const panelFinale = $('#panelFinale');
 
-  if (selectedCardIdx < 0 || !deckData.cards[selectedCardIdx]) {
-    if (panelEmpty)  panelEmpty.style.display  = 'block';
-    if (panelEditor) panelEditor.style.display = 'none';
+  // Hide all panels first
+  if (panelEmpty)  panelEmpty.style.display  = 'none';
+  if (panelEditor) panelEditor.style.display = 'none';
+  if (panelIntro)  panelIntro.style.display  = 'none';
+  if (panelFinale) panelFinale.style.display = 'none';
+
+  // Update sidebar active states
+  $('#btnSelectIntro')?.classList.toggle('active', selectedSlot === 'intro');
+  $('#btnSelectFinale')?.classList.toggle('active', selectedSlot === 'finale');
+
+  // ── Intro slot selected ───────────────────────────
+  if (selectedSlot === 'intro') {
+    if (panelIntro) panelIntro.style.display = 'block';
+    const n = $('#uploadIntroCanvasName');
+    if (n) n.textContent = deckData.intro.filename;
+    updatePreview(deckData.intro, '#introCanvasImg', '#introCanvasVideo', '#introCanvasEmpty');
     return;
   }
 
-  if (panelEmpty)  panelEmpty.style.display  = 'none';
-  if (panelEditor) panelEditor.style.display = 'block';
+  // ── Finale slot selected ──────────────────────────
+  if (selectedSlot === 'finale') {
+    if (panelFinale) panelFinale.style.display = 'block';
+    const n = $('#uploadFinaleCanvasName');
+    if (n) n.textContent = deckData.finale.filename;
+    updatePreview(deckData.finale, '#finaleCanvasImg', '#finaleCanvasVideo', '#finaleCanvasEmpty');
+    return;
+  }
 
-  const card = deckData.cards[selectedCardIdx];
+  // ── Card selected ─────────────────────────────────
+  if (selectedCardIdx >= 0 && deckData.cards[selectedCardIdx]) {
+    if (panelEditor) panelEditor.style.display = 'block';
 
-  // Update title
-  const title = $('#cardEditorTitle');
-  if (title) title.textContent = `Card #${pad(selectedCardIdx + 1)}`;
+    const card = deckData.cards[selectedCardIdx];
 
-  // Update filename labels
-  const frontName = $('#uploadFrontName');
-  const backName  = $('#uploadBackName');
-  if (frontName) frontName.textContent = card.front.filename;
-  if (backName)  backName.textContent  = card.back.filename;
+    const title = $('#cardEditorTitle');
+    if (title) title.textContent = `Card #${pad(selectedCardIdx + 1)}`;
 
-  // ── Front preview ──
-  updatePreview(
-    card.front,
-    '#frontPreviewImg',
-    '#frontPreviewVideo',
-    '#frontPreviewEmpty'
-  );
+    const frontName = $('#uploadFrontName');
+    const backName  = $('#uploadBackName');
+    if (frontName) frontName.textContent = card.front.filename;
+    if (backName)  backName.textContent  = card.back.filename;
 
-  // ── Back preview ──
-  updatePreview(
-    card.back,
-    '#backPreviewImg',
-    '#backPreviewVideo',
-    '#backPreviewEmpty'
-  );
+    updatePreview(card.front, '#frontPreviewImg', '#frontPreviewVideo', '#frontPreviewEmpty');
+    updatePreview(card.back,  '#backPreviewImg',  '#backPreviewVideo',  '#backPreviewEmpty');
 
-  // ── Intro preview (filename label) ──
-  const introName = $('#uploadIntroName');
-  if (introName) introName.textContent = deckData.intro.filename;
+    // Sync meta row labels
+    const introName  = $('#uploadIntroName');
+    const finaleName = $('#uploadFinaleName');
+    if (introName)  introName.textContent  = deckData.intro.filename;
+    if (finaleName) finaleName.textContent = deckData.finale.filename;
+    return;
+  }
 
-  // ── Finale preview (filename label) ──
-  const finaleName = $('#uploadFinaleName');
-  if (finaleName) finaleName.textContent = deckData.finale.filename;
+  // ── Nothing selected ─────────────────────────────
+  if (panelEmpty) panelEmpty.style.display = 'block';
 }
 
 /* ── UPDATE A SINGLE PREVIEW CANVAS ────────────────── */
@@ -610,6 +707,7 @@ function render() {
 /* ── EXPOSE TO HTML onclick HANDLERS ───────────────── */
 window._cardAdmin = {
   selectCard:  onSelectCard,
+  selectSlot:  onSelectSlot,
   moveUp:      onMoveCardUp,
   moveDown:    onMoveCardDown,
   removeCard:  onRemoveCard,
