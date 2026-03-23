@@ -1,6 +1,6 @@
 # 🃏 3C Card Games
 
-**Aurion's Lucky Wisdom Deck** — a modular card game platform built for
+**3C Card Deck** — a modular card game platform built for
 [3C Thread To Success](https://3c-public-library.org).
 
 Players pick a number, reveal their card, flip it to receive a wisdom message.
