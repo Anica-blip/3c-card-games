@@ -269,6 +269,7 @@
 ══════════════════════════════════════════════════ */
 
   const R2_PUBLIC  = 'https://files.3c-public-library.org/CardGames';
+  const WORKER_URL = 'https://3c-card-games.3c-innertherapy.workers.dev';
   const PUBLIC_APP = 'public/index.html';
 
   /* ── Helpers ────────────────────────────────── */
@@ -347,8 +348,8 @@
       return;
     }
 
-    // Fetch deck JSON to get title + correct landing URL
-    fetch(`${R2_PUBLIC}/${slug}/deck.json`)
+    // Fetch deck JSON through Cloudflare Worker (handles CORS)
+    fetch(`${WORKER_URL}/deck/${slug}`)
       .then(r => {
         if (!r.ok) throw new Error('Not found');
         return r.json();
