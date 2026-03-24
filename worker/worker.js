@@ -98,17 +98,35 @@ export default {
         try {
           const obj = await env.CARD_GAMES_BUCKET.get(r2Key);
           if (!obj) {
-            return respond(
+            return new Response(
               JSON.stringify({ error: `Deck not found: ${slug}` }),
-              404, origin
+              {
+                status: 404,
+                headers: {
+                  'Content-Type': 'application/json',
+                  ...corsHeaders(origin),
+                },
+              }
             );
           }
           const text = await obj.text();
-          return respond(text, 200, origin);
+          return new Response(text, {
+            status: 200,
+            headers: {
+              'Content-Type': 'application/json',
+              ...corsHeaders(origin),
+            },
+          });
         } catch (err) {
-          return respond(
+          return new Response(
             JSON.stringify({ error: 'R2 read failed', detail: err.message }),
-            500, origin
+            {
+              status: 500,
+              headers: {
+                'Content-Type': 'application/json',
+                ...corsHeaders(origin),
+              },
+            }
           );
         }
       }
