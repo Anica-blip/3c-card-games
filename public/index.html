@@ -599,6 +599,7 @@
 ══════════════════════════════════════════════════ */
 
   const R2_PUBLIC = 'https://files.3c-public-library.org/CardGames';
+  const WORKER_URL = 'https://3c-card-games.3c-innertherapy.workers.dev';
 
   /* ── STATE ──────────────────────────────────────── */
   let deck          = null;
@@ -845,9 +846,13 @@
     if (!slug) { goTo('screen-error'); return; }
 
     try {
-      const res = await fetch(`${R2_PUBLIC}/${slug}/deck.json`);
+      // Fetch deck JSON through Cloudflare Worker (handles CORS)
+      const res = await fetch(`${WORKER_URL}/deck/${slug}`);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       deck = await res.json();
+      
+      // Deck JSON contains R2 public URLs for media
+      // deck.intro, deck.finale, deck.cards[].front, deck.cards[].back
       wireButtons();
       goTo('screen-intro');
     } catch (err) {
