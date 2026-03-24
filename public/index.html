@@ -675,18 +675,12 @@
       v.appendChild(s);
       wrap.appendChild(v);
       
-      // Once video starts playing, unmute it after a brief moment
+      // Unmute after video starts playing
       v.addEventListener('playing', () => {
         setTimeout(() => {
           v.muted = false;
-        }, 100); // unmute after 100ms
+        }, 100);
       }, { once: true });
-      
-      // Fallback: try to play if autoplay blocked
-      v.play().catch(() => {
-        v.muted = true;
-        v.play().catch(() => {});
-      });
     } else {
       const img = document.createElement('img');
       img.src   = url;
@@ -790,7 +784,7 @@
     if (isVideo(url)) {
       const v       = document.createElement('video');
       v.autoplay    = true;
-      v.muted       = false; // audio on for cards (user already interacted)
+      v.muted       = false; // audio on
       v.loop        = true;
       v.playsInline = true;
       const s = document.createElement('source');
@@ -798,12 +792,6 @@
       s.type  = 'video/mp4';
       v.appendChild(s);
       faceEl.appendChild(v);
-      
-      // Fallback: if autoplay with audio fails, mute and retry
-      v.play().catch(() => {
-        v.muted = true;
-        v.play().catch(() => {});
-      });
     } else {
       const img = new Image();
       img.src   = url;
