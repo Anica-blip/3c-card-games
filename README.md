@@ -1,6 +1,6 @@
 # 🃏 3C Card Games
 
-**3C Card Deck** — a modular card game platform built for
+**Aurion's Lucky Wisdom Deck** — a modular card game platform built for
 [3C Thread To Success](https://3c-public-library.org).
 
 Players pick a number, reveal their card, flip it to receive a wisdom message.
@@ -13,8 +13,8 @@ update decks.
 
 | Page | URL |
 |---|---|
-| Admin Panel | [admin/index.html](https://anica-blip.github.io/3c-card-games/admin/index.html) |
-| Landing Upload | [admin/landing-upload.html](https://anica-blip.github.io/3c-card-games/admin/landing-upload.html) |
+| Admin Panel | [admin/index.html](https://3c-card-games.vercel.app/admin/index.html) |
+| Landing Upload | [admin/landing-upload.html](https://3c-card-games.vercel.app/admin/landing-upload.html) |
 | Public Game | `landing.html?deck={slug}` |
 
 ---
