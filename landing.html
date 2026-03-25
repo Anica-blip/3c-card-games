@@ -295,6 +295,20 @@
                           ? deckJson.landing
                           : `${R2_PUBLIC}/${slug}/landing.png`;
 
+    // Preload intro video in background so it's cached when index.html loads
+    if (deckJson && deckJson.intro && isVideo(deckJson.intro)) {
+      const preload = document.createElement('video');
+      preload.preload = 'auto';
+      preload.muted = true;
+      preload.style.display = 'none';
+      const src = document.createElement('source');
+      src.src = deckJson.intro;
+      src.type = 'video/mp4';
+      preload.appendChild(src);
+      document.body.appendChild(preload);
+      preload.load();
+    }
+
     /* ── Inject media ─────────────────────────── */
     if (isVideo(landingUrl)) {
       // Video
