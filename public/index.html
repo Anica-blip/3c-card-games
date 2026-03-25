@@ -198,6 +198,33 @@
     }
 
     /* ══════════════════════════════════════════════════
+       SCREEN: CONSENT
+       Appears first to get user consent for video playback
+       Matches the number page background with gold border
+    ══════════════════════════════════════════════════ */
+    #screen-consent {
+      background: #1a0a2e;
+      gap: 24px;
+    }
+
+    .consent-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: clamp(28px, 8%, 40px);
+    }
+
+    .consent-text {
+      font-family: 'Cinzel', serif;
+      font-size: clamp(1.4rem, 5vw, 1.8rem);
+      font-weight: 700;
+      color: #E2C98A;
+      letter-spacing: 0.08em;
+      text-align: center;
+    }
+
+    /* ══════════════════════════════════════════════════
        SCREEN: INTRO
        Full media fill — same as landing page feel
        Button: LET'S GO at bottom
@@ -488,10 +515,18 @@
     <span class="loading-text">Loading…</span>
   </div>
 
-  <!-- ── ERROR ──────────────────────────────────────── -->
+  <!-- ── ERROR ──────────────────────────────────── -->
   <div class="screen" id="screen-error">
     <strong>Deck not found</strong>
     <p>This link may be invalid<br>or the deck has been removed.</p>
+  </div>
+
+  <!-- ── CONSENT ────────────────────────────────────── -->
+  <div class="screen" id="screen-consent">
+    <div class="consent-container">
+      <p class="consent-text">Ready to begin?</p>
+      <button class="btn-gold" id="btnConsent">PLAY</button>
+    </div>
   </div>
 
   <!-- ════════════════════════════════════════════════
@@ -607,6 +642,7 @@
   let isFlipped     = false;
   let finaleLoaded  = false;
   let currentScreen = 'screen-loading';
+  let userConsented = false;
 
   /* ── HELPERS ────────────────────────────────────── */
   function getDeckSlug() {
@@ -668,7 +704,6 @@
 
     if (isVideo(url)) {
       const v       = document.createElement('video');
-      const userConsented = hasAutoplayConsent();
       
       v.autoplay    = true;
       v.muted       = true; // always start muted for autoplay
@@ -681,7 +716,7 @@
       v.appendChild(s);
       wrap.appendChild(v);
       
-      // If user clicked ENTER on landing page, unmute immediately
+      // If user clicked PLAY on consent screen, unmute after video loads
       if (userConsented) {
         v.addEventListener('loadeddata', () => {
           v.muted = false;
@@ -689,13 +724,6 @@
             // If unmuted play fails, stay muted
             v.muted = true;
           });
-        }, { once: true });
-      } else {
-        // No consent flag - unmute after brief delay
-        v.addEventListener('playing', () => {
-          setTimeout(() => {
-            v.muted = false;
-          }, 100);
         }, { once: true });
       }
     } else {
@@ -831,6 +859,12 @@
 
   /* ── WIRE BUTTONS ───────────────────────────────── */
   function wireButtons() {
+    // Consent → Intro (with user consent for video playback)
+    document.getElementById('btnConsent').onclick = () => {
+      userConsented = true;
+      goTo('screen-intro');
+    };
+
     // Intro → Pick
     document.getElementById('btnStart').onclick = () => goTo('screen-pick');
 
@@ -878,7 +912,7 @@
       // Deck JSON contains R2 public URLs for media
       // deck.intro, deck.finale, deck.cards[].front, deck.cards[].back
       wireButtons();
-      goTo('screen-intro');
+      goTo('screen-consent');
     } catch (err) {
       console.error('Deck load failed:', err);
       goTo('screen-error');
