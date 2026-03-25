@@ -1,30 +1,16 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" dir="ltr">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
-  <title>Aurion's Lucky Wisdom Deck — 3C Thread To Success</title>
-
-  <!-- Open Graph -->
-  <meta property="og:title"       content="Aurion's Lucky Wisdom Deck" />
-  <meta property="og:description" content="Pick a card. Receive your wisdom. A lucky message is waiting for you." />
-  <meta property="og:image"       content="https://files.3c-public-library.org/CardGames/og-preview.png" />
-  <meta property="og:type"        content="website" />
-  <meta property="og:site_name"   content="3C Thread To Success" />
-
-  <!-- Twitter Card -->
-  <meta name="twitter:card"        content="summary_large_image" />
-  <meta name="twitter:title"       content="Aurion's Lucky Wisdom Deck" />
-  <meta name="twitter:description" content="Pick a card. Receive your wisdom." />
-  <meta name="twitter:image"       content="https://files.3c-public-library.org/CardGames/og-preview.png" />
-
+  <title>3C Card Game Deck</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Lato:wght@300;400;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Open+Sans:wght@400;600;700&display=swap" rel="stylesheet" />
   <link rel="icon" href="data:," />
 
   <style>
-    /* ── RESET ──────────────────────────────────── */
+    /* ── RESET ──────────────────────────────────────── */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     html, body { width: 100%; height: 100%; }
 
@@ -34,15 +20,16 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      font-family: 'Lato', sans-serif;
+      font-family: 'Open Sans', sans-serif;
       overflow: hidden;
     }
 
-    /* ── 9:16 PORTRAIT CONTAINER ─────────────────
-       Identical sizing logic to public/index.html.
-       Desktop: fits in viewport, 9:16 enforced.
-       Mobile: fills full screen exactly.
-    ─────────────────────────────────────────────── */
+    /* ══════════════════════════════════════════════════
+       THE DEVICE FRAME
+       This never changes — same container on every screen.
+       9:16 portrait, gold border, rounded corners.
+       All screens sit inside this frame.
+    ══════════════════════════════════════════════════ */
     .device {
       position: relative;
       width: min(390px, 56.25vh);
@@ -52,34 +39,60 @@
       border-radius: clamp(0px, 2vw, 28px);
       overflow: hidden;
       box-shadow:
-        0 0 0 1.5px rgba(200,169,110,0.35),
-        0 30px 80px rgba(0,0,0,0.6);
+        0 0 0 2px rgba(200,169,110,0.6),
+        0 0 0 4px rgba(200,169,110,0.15),
+        0 30px 80px rgba(0,0,0,0.7);
     }
 
+    /* Mobile: Keep 9:16 container with borders visible */
     @media (max-width: 480px) {
       body {
         align-items: flex-start;
-        background: #3B1265;
+        justify-content: flex-start;
+        background: #1a0835;
+        padding: 0;
+        margin: 0;
       }
       .device {
-        width: 100vw;
-        height: 100dvh;
-        border-radius: 0;
-        box-shadow: none;
-        aspect-ratio: unset;
+        width: 100vw !important;
+        height: 100dvh !important;
+        border-radius: 0 !important;
+        box-shadow: none !important;
+        aspect-ratio: unset !important;
+        min-width: unset !important;
+        min-height: unset !important;
       }
     }
 
-    /* ── MEDIA LAYER ─────────────────────────────
-       Image or video fills container exactly.
-       object-fit: cover — no gaps, no distortion.
-    ─────────────────────────────────────────────── */
+    /* ── SCREENS ─────────────────────────────────────── */
+    .screen {
+      position: absolute;
+      inset: 0;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      transition: opacity 0.4s ease;
+    }
+    .screen.active {
+      display: flex;
+      opacity: 1;
+    }
+    .screen.fading {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    /* ── MEDIA FILL (image or video fills frame) ───────
+       Used on: Intro, Card front/back, Finale
+       object-fit:cover — always fills, never distorts
+    ─────────────────────────────────────────────────── */
     .media-wrap {
       position: absolute;
       inset: 0;
       z-index: 0;
     }
-
     .media-wrap img,
     .media-wrap video {
       width: 100%;
@@ -90,292 +103,789 @@
       inset: 0;
     }
 
-    /* Gradient overlay — keeps ENTER button readable */
+    /* Soft gradient so buttons stay readable */
     .media-overlay {
       position: absolute;
       inset: 0;
       background: linear-gradient(
         to bottom,
-        rgba(20,4,50,0.08) 0%,
-        rgba(20,4,50,0.58) 100%
+        rgba(20,4,50,0.05) 0%,
+        rgba(20,4,50,0.60) 100%
       );
       z-index: 1;
     }
 
-    /* ── FALLBACK ─────────────────────────────────
-       Shown when no landing image exists in R2 yet.
-       Branded gradient with deck title.
-    ─────────────────────────────────────────────── */
-    .media-fallback {
-      position: absolute;
-      inset: 0;
-      z-index: 0;
-      background: radial-gradient(ellipse at 50% 40%, #5A2090 0%, #1a0835 100%);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 16px;
-      padding: 32px;
-    }
-
-    .fallback-brand {
-      font-family: 'Cinzel', serif;
-      color: #00D4FF;
-      font-size: clamp(0.65rem, 1.8vw, 0.8rem);
-      letter-spacing: 0.15em;
-      text-align: center;
-    }
-
-    .fallback-title {
-      font-family: 'Cinzel', serif;
-      color: #fff;
-      font-size: clamp(1.1rem, 4vw, 1.4rem);
-      font-weight: 700;
-      text-align: center;
-      line-height: 1.4;
-    }
-
-    .fallback-divider {
-      width: 60%;
-      height: 1px;
-      background: rgba(200,169,110,0.4);
-    }
-
-    /* ── CONTENT LAYER (above overlay) ───────────── */
-    .landing-content {
-      position: absolute;
-      inset: 0;
+    /* Content layer — sits above media */
+    .media-content {
+      position: relative;
       z-index: 2;
+      width: 100%;
+      height: 100%;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: flex-end;
       padding-bottom: 8%;
-      width: 100%;
     }
 
-    /* ── ENTER BUTTON ────────────────────────────── */
-    .btn-enter {
-      font-family: 'Cinzel', serif;
-      font-size: clamp(0.85rem, 2.5vw, 1.05rem);
+    /* ── BUTTONS ─────────────────────────────────────── */
+    /* Gold pill — used on Intro (LET'S GO), card NEXT */
+    .btn-gold {
+      font-family: 'Open Sans', sans-serif;
+      font-size: clamp(0.85rem, 2.5vw, 1rem);
       font-weight: 700;
-      letter-spacing: 0.2em;
+      letter-spacing: 0.12em;
       color: #3B1265;
       background: linear-gradient(135deg, #E2C98A, #C8A96E);
       border: none;
       border-radius: 50px;
-      padding: 15px 54px;
+      padding: 14px 52px;
       cursor: pointer;
-      box-shadow: 0 4px 24px rgba(200,169,110,0.45);
-      transition: transform 0.18s ease, box-shadow 0.18s ease;
+      box-shadow: 0 4px 24px rgba(200,169,110,0.5);
+      transition: transform 0.16s ease, box-shadow 0.16s ease;
     }
+    .btn-gold:hover  { transform: translateY(-2px); box-shadow: 0 8px 32px rgba(200,169,110,0.65); }
+    .btn-gold:active { transform: scale(0.96); }
 
-    .btn-enter:hover {
+    /* Gold outline — used on finale BACK / CLOSE */
+    .btn-outline {
+      font-family: 'Open Sans', sans-serif;
+      font-size: clamp(0.8rem, 2.2vw, 0.92rem);
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      color: #E2C98A;
+      background: rgba(200,169,110,0.10);
+      border: 1.5px solid rgba(200,169,110,0.55);
+      border-radius: 50px;
+      padding: 12px 36px;
+      cursor: pointer;
+      transition: transform 0.16s ease, border-color 0.16s, background 0.16s;
+    }
+    .btn-outline:hover {
       transform: translateY(-2px);
-      box-shadow: 0 8px 32px rgba(200,169,110,0.6);
+      border-color: #C8A96E;
+      background: rgba(200,169,110,0.20);
     }
 
-    .btn-enter:active { transform: scale(0.97); }
-
-    /* ── LOADING STATE ───────────────────────────── */
-    #loadingState {
-      position: absolute;
-      inset: 0;
-      z-index: 10;
+    /* ── LOADING ─────────────────────────────────────── */
+    #screen-loading {
       background: #1a0835;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+    }
+    .loading-text {
       font-family: 'Cinzel', serif;
       color: #C8A96E;
-      font-size: clamp(0.75rem, 2vw, 0.9rem);
+      font-size: clamp(0.75rem, 2vw, 0.88rem);
       letter-spacing: 0.12em;
       animation: pulse 1.8s ease-in-out infinite;
     }
 
-    /* ── ERROR STATE ─────────────────────────────── */
-    #errorState {
-      display: none;
-      position: absolute;
-      inset: 0;
-      z-index: 10;
+    /* ── ERROR ───────────────────────────────────────── */
+    #screen-error {
       background: #1a0835;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 14px;
       padding: 32px;
       text-align: center;
+      gap: 14px;
     }
-
-    #errorState strong {
+    #screen-error strong {
       font-family: 'Cinzel', serif;
       color: #C8A96E;
       font-size: clamp(0.85rem, 2.5vw, 1rem);
     }
-
-    #errorState p {
-      color: rgba(255,255,255,0.6);
-      font-size: clamp(0.75rem, 2vw, 0.88rem);
+    #screen-error p {
+      color: rgba(255,255,255,0.55);
+      font-size: clamp(0.75rem, 2vw, 0.85rem);
       line-height: 1.6;
     }
 
-    @keyframes pulse {
-      0%, 100% { opacity: 0.4; }
-      50%       { opacity: 1; }
+    /* ══════════════════════════════════════════════════
+       SCREEN: INTRO
+       Full media fill — same as landing page feel
+       Button: LET'S GO at bottom
+    ══════════════════════════════════════════════════ */
+    #screen-intro {
+      background: radial-gradient(ellipse at center, #5A2090 0%, #1a0835 100%);
     }
+
+    /* ══════════════════════════════════════════════════
+       SCREEN: PICK A NUMBER
+       Purple branded background (not media fill)
+       Square neon gold number buttons
+       Same frame — branded content inside
+    ══════════════════════════════════════════════════ */
+    #screen-pick {
+      background: #1a0a2e;
+      justify-content: space-between;
+      padding: 0 6% 3%;
+      gap: 0;
+      align-items: center;
+    }
+
+    .pick-header {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-top: 5%;
+    }
+
+    .pick-logo {
+      width: clamp(32px, 8%, 44px);
+      margin-bottom: 2%;
+    }
+
+    .pick-brand {
+      font-family: 'Open Sans', sans-serif;
+      font-size: clamp(0.6rem, 1.8vw, 0.75rem);
+      color: #00D4FF;
+      letter-spacing: 0.12em;
+      margin-bottom: 5%;
+      text-align: center;
+    }
+
+    /* PRESS A NUMBER pill */
+    .pick-prompt-wrap {
+      background: rgba(200,169,110,0.14);
+      border: 1.5px solid #C8A96E;
+      border-radius: 50px;
+      padding: clamp(8px, 2%, 12px) clamp(20px, 7%, 36px);
+      margin-bottom: 6%;
+    }
+    .pick-prompt {
+      font-family: 'Open Sans', sans-serif;
+      font-size: clamp(0.82rem, 2.6vw, 1rem);
+      font-weight: 700;
+      color: #00D4FF;
+      letter-spacing: 0.08em;
+      text-align: center;
+    }
+
+    /* Number grids — centred (3-3-1 layout) */
+    .number-grid-top {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: clamp(10px, 3%, 14px);
+      width: 100%;
+      max-width: 280px;
+      margin-bottom: clamp(10px, 3%, 14px);
+    }
+    .number-grid-middle {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: clamp(10px, 3%, 14px);
+      width: 100%;
+      max-width: 280px;
+      margin-bottom: clamp(10px, 3%, 14px);
+    }
+    .number-grid-bottom {
+      display: flex;
+      justify-content: center;
+      gap: clamp(10px, 3%, 14px);
+      width: 100%;
+      max-width: 280px;
+    }
+
+    /* ── GOLD NUMBER BUTTONS ─────────────────────────── */
+    .num-btn {
+      width: clamp(56px, 15vw, 62px);
+      height: clamp(56px, 15vw, 62px);
+      background: rgba(200,169,110,0.14);
+      border: 2px solid #C8A96E;
+      border-radius: 10px;
+      font-family: 'Open Sans', sans-serif;
+      font-size: 32px;
+      font-weight: 700;
+      color: #E2C98A;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.16s ease;
+      box-shadow:
+        0 0 16px rgba(200,169,110,0.4),
+        0 0 32px rgba(200,169,110,0.15),
+        inset 0 0 12px rgba(200,169,110,0.08);
+    }
+
+    .num-btn:hover {
+      background: rgba(226,201,138,0.22);
+      border-color: #E2C98A;
+      color: #fff;
+      box-shadow:
+        0 0 24px rgba(200,169,110,0.65),
+        0 0 48px rgba(200,169,110,0.25),
+        inset 0 0 16px rgba(200,169,110,0.12);
+      transform: translateY(-2px);
+    }
+
+    .num-btn:active,
+    .num-btn.selected {
+      background: linear-gradient(135deg, #E2C98A, #C8A96E);
+      border-color: #E2C98A;
+      color: #3B1265;
+      box-shadow:
+        0 0 32px rgba(200,169,110,0.85),
+        0 0 64px rgba(200,169,110,0.35);
+      transform: scale(0.95);
+    }
+
+    /* Hide number when custom image button is used */
+    .num-btn.has-image span { display: none; }
+
+    .pick-center-section {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      flex: 1;
+    }
+
+    .pick-footer {
+      margin-top: 5%;
+      text-align: center;
+      padding: 0 8%;
+    }
+
+    .pick-instruction {
+      font-family: 'Open Sans', sans-serif;
+      font-size: clamp(0.75rem, 2vw, 0.85rem);
+      font-weight: 400;
+      color: rgba(226,201,138,0.70);
+      text-align: center;
+      line-height: 1.6;
+    }
+
+    /* Watermark — bottom of pick screen only */
+    .pick-watermark {
+      position: absolute;
+      bottom: 10px;
+      left: 0; right: 0;
+      text-align: center;
+      font-family: 'Open Sans', sans-serif;
+      font-size: 9px;
+      color: rgba(200,169,110,0.30);
+      letter-spacing: 0.03em;
+      padding: 0 12px;
+      line-height: 1.4;
+      pointer-events: none;
+    }
+
+    /* ══════════════════════════════════════════════════
+       SCREEN: CARD (FRONT → TAP → FLIP → BACK)
+       Card fills entire frame — no background visible
+       Tap hint pulses until flip
+       NEXT button appears after flip
+    ══════════════════════════════════════════════════ */
+    #screen-card {
+      background: #0a0614;
+      perspective: 1200px;
+    }
+
+    .card-scene {
+      width: 100%;
+      height: 100%;
+      position: relative;
+      transform-style: preserve-3d;
+      transition: transform 0.65s cubic-bezier(0.4, 0, 0.2, 1);
+      cursor: pointer;
+    }
+    .card-scene.flipped { transform: rotateY(180deg); }
+
+    .card-face {
+      position: absolute;
+      inset: 0;
+      backface-visibility: hidden;
+      -webkit-backface-visibility: hidden;
+      overflow: hidden;
+    }
+    .card-face img,
+    .card-face video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      pointer-events: none;
+    }
+    .card-face-front { background: #2a0856; }
+    .card-face-back  { background: #1a0835; transform: rotateY(180deg); }
+
+    /* Tap hint */
+    .tap-hint {
+      position: absolute;
+      bottom: 6%;
+      left: 0; right: 0;
+      text-align: center;
+      font-family: 'Open Sans', sans-serif;
+      font-size: clamp(0.68rem, 1.8vw, 0.8rem);
+      color: rgba(255,255,255,0.50);
+      letter-spacing: 0.1em;
+      animation: pulse 2.2s ease-in-out infinite;
+      pointer-events: none;
+      z-index: 5;
+    }
+
+    /* NEXT button — appears after flip, pushed to bottom */
+    .next-btn-wrap {
+      position: absolute;
+      bottom: 3%;
+      left: 0; right: 0;
+      display: none;
+      justify-content: center;
+      z-index: 5;
+    }
+    .next-btn-wrap.visible { display: flex; }
+
+    /* Back to pick */
+    .card-back-btn {
+      position: absolute;
+      top: 3%;
+      left: 4%;
+      z-index: 10;
+      background: rgba(200,169,110,0.18);
+      border: 1px solid rgba(200,169,110,0.40);
+      border-radius: 50px;
+      padding: 6px 16px;
+      font-family: 'Open Sans', sans-serif;
+      font-size: clamp(0.68rem, 1.8vw, 0.78rem);
+      font-weight: 600;
+      color: #E2C98A;
+      cursor: pointer;
+      transition: background 0.18s;
+      letter-spacing: 0.05em;
+    }
+    .card-back-btn:hover { background: rgba(200,169,110,0.32); }
+
+    /* Mobile: Maintain 9:16 aspect ratio with borders */
+
+    /* ══════════════════════════════════════════════════
+       SCREEN: FINALE
+       Video fills frame
+       BACK (to intro) + CLOSE buttons at bottom
+    ══════════════════════════════════════════════════ */
+    #screen-finale {
+      background: #1a0835;
+    }
+
+    .finale-buttons {
+      display: flex;
+      gap: 14px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    /* ── ANIMATIONS ──────────────────────────────────── */
+    @keyframes pulse {
+      0%, 100% { opacity: 0.3; }
+      50%       { opacity: 0.85; }
+    }
+
   </style>
 </head>
 <body>
 
 <div class="device" id="device">
 
-  <!-- Loading -->
-  <div id="loadingState">Loading…</div>
+  <!-- ── LOADING ────────────────────────────────────── -->
+  <div class="screen active" id="screen-loading">
+    <span class="loading-text">Loading…</span>
+  </div>
 
-  <!-- Error -->
-  <div id="errorState">
+  <!-- ── ERROR ──────────────────────────────────────── -->
+  <div class="screen" id="screen-error">
     <strong>Deck not found</strong>
-    <p>This link may be invalid or the deck has been removed.</p>
+    <p>This link may be invalid<br>or the deck has been removed.</p>
   </div>
 
-  <!-- Fallback branded background (when no R2 landing image yet) -->
-  <div class="media-fallback" id="mediaFallback" style="display:none;">
-    <span class="fallback-brand">3C Thread To Success</span>
-    <div class="fallback-divider"></div>
-    <span class="fallback-title" id="fallbackTitle">Aurion's Lucky Wisdom Deck</span>
+  <!-- ════════════════════════════════════════════════
+       INTRO SCREEN
+       Media fills frame — same container, same gold border
+       Button: LET'S GO
+  ════════════════════════════════════════════════ -->
+  <div class="screen" id="screen-intro">
+    <div class="media-wrap"    id="introMediaWrap"></div>
+    <div class="media-overlay"></div>
+    <div class="media-content">
+      <button class="btn-gold" id="btnStart">LET'S GO</button>
+    </div>
   </div>
 
-  <!-- Media layer: image or video from R2 -->
-  <div class="media-wrap"    id="mediaWrap"    style="display:none;"></div>
-  <div class="media-overlay" id="mediaOverlay" style="display:none;"></div>
+  <!-- ════════════════════════════════════════════════
+       PICK A NUMBER SCREEN
+       Branded purple — square neon number buttons
+       Same frame, same gold border
+  ════════════════════════════════════════════════ -->
+  <div class="screen" id="screen-pick">
 
-  <!-- ENTER button -->
-  <div class="landing-content" id="landingContent" style="display:none;">
-    <button class="btn-enter" id="btnEnter">ENTER</button>
+    <div class="pick-header">
+      <img
+        class="pick-logo"
+        src="https://files.3c-public-library.org/CardGames/logo.png"
+        alt="3C"
+        onerror="this.style.display='none'"
+      />
+      <p class="pick-brand">3C Thread To Success</p>
+    </div>
+
+    <div class="pick-center-section">
+      <div class="pick-prompt-wrap">
+        <p class="pick-prompt">PRESS A NUMBER</p>
+      </div>
+
+      <!-- 3-3-1 layout: buttons 1-3, 4-6, 7 -->
+      <div class="number-grid-top"    id="numGridTop"></div>
+      <div class="number-grid-middle" id="numGridMiddle"></div>
+      <div class="number-grid-bottom" id="numGridBottom"></div>
+
+      <div class="pick-footer">
+        <p class="pick-instruction">Go ahead — choose any number<br>to see your results</p>
+      </div>
+    </div>
+
+    <p class="pick-watermark">Designed &amp; built with ❤️ by Claude (Anthropic) × Chef Anica · 3C Thread To Success Cooking Lab 🧪👨‍🍳</p>
+
+  </div>
+
+  <!-- ════════════════════════════════════════════════
+       CARD SCREEN
+       Card front fills frame → tap → flips to back
+       NEXT appears after flip
+  ════════════════════════════════════════════════ -->
+  <div class="screen" id="screen-card">
+
+    <button class="card-back-btn" id="btnPickAgain">← Pick Again</button>
+
+    <div class="card-scene" id="cardScene">
+      <div class="card-face card-face-front" id="cardFront"></div>
+      <div class="card-face card-face-back"  id="cardBack"></div>
+    </div>
+
+    <div class="tap-hint"      id="tapHint">TAP CARD TO REVEAL</div>
+
+    <div class="next-btn-wrap" id="nextBtnWrap">
+      <button class="btn-gold" id="btnNext">NEXT →</button>
+    </div>
+
+  </div>
+
+  <!-- ════════════════════════════════════════════════
+       FINALE SCREEN
+       Video fills frame — two buttons at bottom
+       BACK → returns to intro
+       CLOSE → closes / returns to landing
+  ════════════════════════════════════════════════ -->
+  <div class="screen" id="screen-finale">
+    <div class="media-wrap"    id="finaleMediaWrap"></div>
+    <div class="media-overlay"></div>
+    <div class="media-content">
+      <div class="finale-buttons">
+        <button class="btn-gold"    id="btnRestart">BACK</button>
+        <button class="btn-outline" id="btnClose">CLOSE</button>
+      </div>
+    </div>
   </div>
 
 </div><!-- /device -->
 
 <script>
 /* ══════════════════════════════════════════════════
-   landing.html — 3C Card Games
+   3C Card Games — Public App
    ──────────────────────────────────────────────────
-   1. Reads ?deck= slug from URL
-   2. Fetches deck.json from R2 to get title
-   3. Loads landing image/video from R2 into container
-   4. ENTER → public/index.html?deck={slug}
+   ONE JSON fetched once → stored in memory as `deck`
+   Each screen reads ONLY its own section on activate:
+
+   screen-intro   → deck.intro   (image or video URL)
+   screen-pick    → deck.cards[].id (builds buttons)
+   screen-card    → deck.cards[n].front (on select)
+                  → deck.cards[n].back  (on flip)
+   screen-finale  → deck.finale  (image or video URL)
 ══════════════════════════════════════════════════ */
 
-  const R2_PUBLIC  = 'https://files.3c-public-library.org/CardGames';
+  const R2_PUBLIC = 'https://files.3c-public-library.org/CardGames';
   const WORKER_URL = 'https://3c-card-games.3c-innertherapy.workers.dev';
-  const PUBLIC_APP = 'public/index.html';
 
-  /* ── Helpers ────────────────────────────────── */
+  /* ── STATE ──────────────────────────────────────── */
+  let deck          = null;
+  let selectedCard  = null;
+  let isFlipped     = false;
+  let finaleLoaded  = false;
+  let currentScreen = 'screen-loading';
+
+  /* ── HELPERS ────────────────────────────────────── */
   function getDeckSlug() {
     return new URLSearchParams(window.location.search).get('deck');
+  }
+
+  function hasAutoplayConsent() {
+    return new URLSearchParams(window.location.search).get('autoplay') === '1';
   }
 
   function isVideo(url) {
     return /\.(mp4|webm|mov|ogg)$/i.test(url || '');
   }
 
-  function showError() {
-    document.getElementById('loadingState').style.display = 'none';
-    document.getElementById('errorState').style.display   = 'flex';
+  /* ── SCREEN TRANSITION ──────────────────────────── */
+  function goTo(id) {
+    const from = document.getElementById(currentScreen);
+    const to   = document.getElementById(id);
+    if (!from || !to || currentScreen === id) return;
+
+    // Stop any video on the screen we're leaving
+    from.querySelectorAll('video').forEach(v => { v.pause(); });
+
+    from.classList.add('fading');
+    setTimeout(() => {
+      from.classList.remove('active', 'fading');
+      to.classList.add('active');
+      currentScreen = id;
+      onScreenActivate(id);
+      // Resume video on screen we're entering
+      to.querySelectorAll('video').forEach(v => { v.play().catch(() => {}); });
+    }, 400);
   }
 
-  /* ── Show landing ────────────────────────────── */
-  function showLanding(slug, deckJson) {
-    document.getElementById('loadingState').style.display = 'none';
+  /* ── SCREEN ACTIVATE ────────────────────────────── */
+  function onScreenActivate(id) {
+    switch (id) {
+      case 'screen-intro':
+        loadMedia('introMediaWrap', deck.intro);
+        break;
+      case 'screen-pick':
+        buildNumberGrid(deck.cards);
+        break;
+      case 'screen-card':
+        break;
+      case 'screen-finale':
+        if (!finaleLoaded) {
+          loadMedia('finaleMediaWrap', deck.finale);
+          finaleLoaded = true;
+        }
+        break;
+    }
+  }
 
-    const title       = (deckJson && deckJson.title) || '';
-    const landingUrl  = (deckJson && deckJson.landing)
-                          ? deckJson.landing
-                          : `${R2_PUBLIC}/${slug}/landing.png`;
+  /* ── LOAD MEDIA ─────────────────────────────────── */
+  function loadMedia(wrapId, url) {
+    const wrap = document.getElementById(wrapId);
+    if (!wrap || !url || wrap.children.length > 0) return;
 
-    // Preload intro video in background so it's cached when index.html loads
-    if (deckJson && deckJson.intro && isVideo(deckJson.intro)) {
-      const preload = document.createElement('video');
-      preload.preload = 'auto';
-      preload.muted = true;
-      preload.style.display = 'none';
-      const src = document.createElement('source');
-      src.src = deckJson.intro;
-      src.type = 'video/mp4';
-      preload.appendChild(src);
-      document.body.appendChild(preload);
-      preload.load();
+    if (isVideo(url)) {
+      const v       = document.createElement('video');
+      const userConsented = hasAutoplayConsent();
+      
+      v.autoplay    = true;
+      v.muted       = true; // always start muted for autoplay
+      v.loop        = true;
+      v.playsInline = true;
+      v.controls    = false;
+      const s = document.createElement('source');
+      s.src   = url;
+      s.type  = 'video/mp4';
+      v.appendChild(s);
+      wrap.appendChild(v);
+      
+      // If user clicked ENTER on landing page, unmute immediately
+      if (userConsented) {
+        v.addEventListener('loadeddata', () => {
+          v.muted = false;
+          v.play().catch(() => {
+            // If unmuted play fails, stay muted
+            v.muted = true;
+          });
+        }, { once: true });
+      } else {
+        // No consent flag - unmute after brief delay
+        v.addEventListener('playing', () => {
+          setTimeout(() => {
+            v.muted = false;
+          }, 100);
+        }, { once: true });
+      }
+    } else {
+      const img = document.createElement('img');
+      img.src   = url;
+      img.alt   = '';
+      wrap.appendChild(img);
+    }
+  }
+
+  /* ── GOLD COIN CLICK SOUND (Web Audio API) ──────── */
+  /*
+    Generates a gold coin "ding" sound programmatically.
+    No external audio file needed.
+  */
+  function playClickSound() {
+    try {
+      const ctx  = new (window.AudioContext || window.webkitAudioContext)();
+      const osc  = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.type      = 'sine';
+      osc.frequency.setValueAtTime(880, ctx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(440, ctx.currentTime + 0.15);
+      gain.gain.setValueAtTime(0.35, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.25);
+      osc.start(ctx.currentTime);
+      osc.stop(ctx.currentTime + 0.25);
+    } catch (e) { /* silent fallback if audio not supported */ }
+  }
+
+  /* ── BUILD NUMBER GRID ──────────────────────────── */
+  function buildNumberGrid(cards) {
+    const topEl = document.getElementById('numGridTop');
+    const midEl = document.getElementById('numGridMiddle');
+    const botEl = document.getElementById('numGridBottom');
+    if (topEl.children.length > 0) return;
+
+    cards.forEach((card, i) => {
+      const btn = document.createElement('button');
+      btn.className = 'num-btn';
+
+      // Support custom Canva button image per card
+      if (card.buttonImage) {
+        btn.style.backgroundImage = `url(${card.buttonImage})`;
+        btn.style.backgroundSize  = 'cover';
+        btn.style.backgroundPosition = 'center';
+        btn.classList.add('has-image');
+      }
+
+      btn.innerHTML = `<span>${card.id}</span>`;
+      btn.addEventListener('click', () => {
+        playClickSound();
+        document.querySelectorAll('.num-btn').forEach(b => b.classList.remove('selected'));
+        btn.classList.add('selected');
+        setTimeout(() => selectCard(card), 220);
+      });
+      // 3-3-1 layout: 1-3 top, 4-6 middle, 7 bottom
+      if (i < 3) topEl.appendChild(btn);
+      else if (i < 6) midEl.appendChild(btn);
+      else botEl.appendChild(btn);
+    });
+  }
+
+  /* ── SELECT CARD ────────────────────────────────── */
+  function selectCard(card) {
+    selectedCard = card;
+    isFlipped    = false;
+
+    const scene = document.getElementById('cardScene');
+    scene.classList.remove('flipped');
+    document.getElementById('tapHint').style.display = 'block';
+    document.getElementById('nextBtnWrap').classList.remove('visible');
+
+    const frontEl = document.getElementById('cardFront');
+    frontEl.innerHTML = '';
+    loadFaceMedia(frontEl, card.front);
+
+    document.getElementById('cardBack').innerHTML = '';
+
+    goTo('screen-card');
+  }
+
+  /* ── FLIP CARD ──────────────────────────────────── */
+  function flipCard() {
+    if (isFlipped) return;
+    isFlipped = true;
+
+    const backEl = document.getElementById('cardBack');
+    if (backEl.children.length === 0 && selectedCard) {
+      loadFaceMedia(backEl, selectedCard.back);
     }
 
-    /* ── Inject media ─────────────────────────── */
-    if (isVideo(landingUrl)) {
-      // Video
-      const v = document.createElement('video');
+    document.getElementById('cardScene').classList.add('flipped');
+    document.getElementById('tapHint').style.display = 'none';
+    document.getElementById('nextBtnWrap').classList.add('visible');
+  }
+
+  /* ── LOAD FACE MEDIA ────────────────────────────── */
+  function loadFaceMedia(faceEl, url) {
+    if (!url) return;
+    if (isVideo(url)) {
+      const v       = document.createElement('video');
       v.autoplay    = true;
-      v.muted       = true;
+      v.muted       = false; // audio on
       v.loop        = true;
       v.playsInline = true;
       const s = document.createElement('source');
-      s.src  = landingUrl;
-      s.type = 'video/mp4';
+      s.src   = url;
+      s.type  = 'video/mp4';
       v.appendChild(s);
-      document.getElementById('mediaWrap').appendChild(v);
-      document.getElementById('mediaWrap').style.display    = 'block';
-      document.getElementById('mediaOverlay').style.display = 'block';
-
+      faceEl.appendChild(v);
     } else {
-      // Image — try loading; fallback to gradient on error
-      const img    = new Image();
-      img.onload   = () => {
-        document.getElementById('mediaWrap').appendChild(img);
-        document.getElementById('mediaWrap').style.display    = 'block';
-        document.getElementById('mediaOverlay').style.display = 'block';
-      };
-      img.onerror  = () => {
-        // No landing image in R2 yet — show branded fallback
-        const fallbackTitle = document.getElementById('fallbackTitle');
-        if (fallbackTitle && title) fallbackTitle.textContent = title;
-        document.getElementById('mediaFallback').style.display = 'flex';
-        document.getElementById('mediaOverlay').style.display  = 'block';
-      };
-      img.src = landingUrl;
-      img.alt = title || 'Landing';
+      const img = new Image();
+      img.src   = url;
+      faceEl.appendChild(img);
     }
+  }
 
-    /* ── Show ENTER button ───────────────────── */
-    const contentEl = document.getElementById('landingContent');
-    contentEl.style.display = 'flex';
+  /* ── RESET ──────────────────────────────────────── */
+  function resetCard() {
+    isFlipped    = false;
+    selectedCard = null;
+    document.getElementById('cardScene').classList.remove('flipped');
+    document.getElementById('cardFront').innerHTML = '';
+    document.getElementById('cardBack').innerHTML  = '';
+    document.getElementById('tapHint').style.display = 'block';
+    document.getElementById('nextBtnWrap').classList.remove('visible');
+    // Clear selected highlight
+    document.querySelectorAll('.num-btn').forEach(b => b.classList.remove('selected'));
+  }
 
-    document.getElementById('btnEnter').onclick = () => {
-      // Add interaction flag to signal user consent for autoplay
-      window.location.href = `${PUBLIC_APP}?deck=${encodeURIComponent(slug)}&autoplay=1`;
+  /* ── WIRE BUTTONS ───────────────────────────────── */
+  function wireButtons() {
+    // Intro → Pick
+    document.getElementById('btnStart').onclick = () => goTo('screen-pick');
+
+    // Card tap → flip
+    document.getElementById('cardScene').onclick = flipCard;
+
+    // Pick Again
+    document.getElementById('btnPickAgain').onclick = () => {
+      resetCard();
+      goTo('screen-pick');
+    };
+
+    // NEXT → Finale
+    document.getElementById('btnNext').onclick = () => goTo('screen-finale');
+
+    // BACK → back to Intro
+    document.getElementById('btnRestart').onclick = () => {
+      resetCard();
+      finaleLoaded = false;
+      document.getElementById('finaleMediaWrap').innerHTML = '';
+      goTo('screen-intro');
+    };
+
+    // CLOSE → close tab / return to landing
+    document.getElementById('btnClose').onclick = () => {
+      window.close();
+      setTimeout(() => {
+        window.location.href =
+          `../landing.html?deck=${encodeURIComponent(getDeckSlug())}`;
+      }, 300);
     };
   }
 
-  /* ── INIT ───────────────────────────────────── */
-  (function init() {
+  /* ── INIT ───────────────────────────────────────── */
+  async function init() {
     const slug = getDeckSlug();
+    if (!slug) { goTo('screen-error'); return; }
 
-    if (!slug) {
-      showError();
-      return;
+    try {
+      // Fetch deck JSON through Cloudflare Worker (handles CORS)
+      const res = await fetch(`${WORKER_URL}/deck/${slug}`);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      deck = await res.json();
+      
+      // Deck JSON contains R2 public URLs for media
+      // deck.intro, deck.finale, deck.cards[].front, deck.cards[].back
+      wireButtons();
+      goTo('screen-intro');
+    } catch (err) {
+      console.error('Deck load failed:', err);
+      goTo('screen-error');
     }
+  }
 
-    // Fetch deck JSON through Cloudflare Worker (handles CORS)
-    fetch(`${WORKER_URL}/deck/${slug}`)
-      .then(r => {
-        if (!r.ok) throw new Error('Not found');
-        return r.json();
-      })
-      .then(data  => showLanding(slug, data))
-      .catch(()   => {
-        // JSON not found — still show landing with slug-based URL
-        // (deck may not be saved yet but image may exist)
-        showLanding(slug, null);
-      });
-  })();
+  document.addEventListener('DOMContentLoaded', init);
 </script>
 
 </body>
