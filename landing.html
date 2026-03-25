@@ -335,7 +335,8 @@
     contentEl.style.display = 'flex';
 
     document.getElementById('btnEnter').onclick = () => {
-      window.location.href = `${PUBLIC_APP}?deck=${encodeURIComponent(slug)}`;
+      // Add interaction flag to signal user consent for autoplay
+      window.location.href = `${PUBLIC_APP}?deck=${encodeURIComponent(slug)}&autoplay=1`;
     };
   }
 
