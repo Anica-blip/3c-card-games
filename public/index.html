@@ -613,6 +613,10 @@
     return new URLSearchParams(window.location.search).get('deck');
   }
 
+  function hasAutoplayConsent() {
+    return new URLSearchParams(window.location.search).get('autoplay') === '1';
+  }
+
   function isVideo(url) {
     return /\.(mp4|webm|mov|ogg)$/i.test(url || '');
   }
@@ -664,8 +668,10 @@
 
     if (isVideo(url)) {
       const v       = document.createElement('video');
+      const userConsented = hasAutoplayConsent();
+      
       v.autoplay    = true;
-      v.muted       = true; // start muted for autoplay compatibility
+      v.muted       = true; // always start muted for autoplay
       v.loop        = true;
       v.playsInline = true;
       v.controls    = false;
@@ -675,12 +681,23 @@
       v.appendChild(s);
       wrap.appendChild(v);
       
-      // Unmute after video starts playing
-      v.addEventListener('playing', () => {
-        setTimeout(() => {
+      // If user clicked ENTER on landing page, unmute immediately
+      if (userConsented) {
+        v.addEventListener('loadeddata', () => {
           v.muted = false;
-        }, 100);
-      }, { once: true });
+          v.play().catch(() => {
+            // If unmuted play fails, stay muted
+            v.muted = true;
+          });
+        }, { once: true });
+      } else {
+        // No consent flag - unmute after brief delay
+        v.addEventListener('playing', () => {
+          setTimeout(() => {
+            v.muted = false;
+          }, 100);
+        }, { once: true });
+      }
     } else {
       const img = document.createElement('img');
       img.src   = url;
