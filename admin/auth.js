@@ -6,21 +6,22 @@
   const errorEl = document.getElementById("error-message");
   const successEl = document.getElementById("success-message");
 
-  function showError(msg) {
-    if (!errorEl) return alert(msg);
-    errorEl.textContent = msg;
-    errorEl.classList.add("show");
+  function showError(message) {
+    if (successEl) successEl.classList.remove("show");
+    if (errorEl) {
+      errorEl.textContent = message;
+      errorEl.classList.add("show");
+    } else {
+      alert(message);
+    }
   }
 
-  function showSuccess(msg) {
-    if (!successEl) return;
-    successEl.textContent = msg;
-    successEl.classList.add("show");
-  }
-
-  function clearMessages() {
-    errorEl?.classList.remove("show");
-    successEl?.classList.remove("show");
+  function showSuccess(message) {
+    if (errorEl) errorEl.classList.remove("show");
+    if (successEl) {
+      successEl.textContent = message;
+      successEl.classList.add("show");
+    }
   }
 
   if (!window.supabase?.createClient) {
@@ -29,7 +30,7 @@
   }
 
   if (!window.APP_CONFIG?.SUPABASE_URL || !window.APP_CONFIG?.SUPABASE_ANON_KEY) {
-    showError("Missing APP_CONFIG in config.js");
+    showError("Missing Supabase config.");
     return;
   }
 
@@ -43,10 +44,9 @@
 
   const path = location.pathname.toLowerCase();
   const isLoginPage = path.endsWith("/admin/login.html");
-  const isAdminIndex = path.endsWith("/admin/") || path.endsWith("/admin/index.html");
+  const isAdminHome = path.endsWith("/admin/") || path.endsWith("/admin/index.html");
 
   async function signInWithGitHub() {
-    clearMessages();
     showSuccess("Redirecting to GitHub...");
     const { error } = await sb.auth.signInWithOAuth({
       provider: "github",
@@ -58,26 +58,35 @@
   }
 
   async function signOut() {
-    clearMessages();
     const { error } = await sb.auth.signOut();
-    if (error) return showError(`Logout failed: ${error.message}`);
+    if (error) {
+      showError(`Logout failed: ${error.message}`);
+      return;
+    }
     location.href = "./login.html";
   }
 
-  async function guard() {
+  async function guardRoutes() {
     const { data, error } = await sb.auth.getSession();
     if (error) {
       showError(`Session check failed: ${error.message}`);
       return;
     }
 
-    const hasSession = !!data.session;
+    const hasSession = !!data?.session;
 
-    if (isLoginPage && hasSession) location.href = "./index.html";
-    if (isAdminIndex && !hasSession) location.href = "./login.html";
+    if (isLoginPage && hasSession) {
+      location.href = "./index.html";
+      return;
+    }
+
+    if (isAdminHome && !hasSession) {
+      location.href = "./login.html";
+      return;
+    }
   }
 
-  function wire() {
+  function wireButtons() {
     const loginBtn = document.getElementById("github-login-btn");
     if (loginBtn) {
       loginBtn.addEventListener("click", async (e) => {
@@ -97,10 +106,10 @@
 
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", async () => {
-      await guard();
-      wire();
+      await guardRoutes();
+      wireButtons();
     });
   } else {
-    guard().then(wire);
+    guardRoutes().then(wireButtons);
   }
 })();
