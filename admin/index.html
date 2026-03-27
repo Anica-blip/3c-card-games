@@ -25,6 +25,13 @@
       <span id="toolbar-sub">Admin Panel</span>
     </div>
     <div id="toolbar-right">
+      <button id="logoutBtn" class="btn-toolbar" title="Logout" style="padding: 8px 12px;">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+          <polyline points="16 17 21 12 16 7"></polyline>
+          <line x1="21" y1="12" x2="9" y2="12"></line>
+        </svg>
+      </button>
       <a href="landing-upload.html" class="btn-toolbar">Landing Page</a>
       <button id="newDeckBtn"  class="btn-toolbar">New Deck</button>
       <button id="saveDeckBtn" class="btn-toolbar btn-save">Save Deck</button>
@@ -255,6 +262,7 @@
     document.body.setAttribute('dir', 'ltr');
   </script>
 
+  <script src="signout.js"></script>
   <script src="admin.app.js" type="module"></script>
 
 </body>
