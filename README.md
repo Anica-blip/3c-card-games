@@ -13,8 +13,9 @@ update decks.
 
 | Page | URL |
 |---|---|
-| Admin Panel | [admin/index.html](https://3c-card-games.vercel.app/admin/index.html) |
-| Landing Upload | [admin/landing-upload.html](https://3c-card-games.vercel.app/admin/landing-upload.html) |
+| Admin Login | [admin/login.html](https://anica-blip.github.io/3c-card-games/admin/login.html) |
+| Admin Panel | [admin/index.html](https://anica-blip.github.io/3c-card-games/admin/index.html) |
+| Landing Upload | [admin/landing-upload.html](https://anica-blip.github.io/3c-card-games/admin/landing-upload.html) |
 | Public Game | `landing.html?deck={slug}` |
 
 ---
