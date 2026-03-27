@@ -7,8 +7,8 @@
 
 // Initialize Supabase client
 const supabase = window.supabase.createClient(
-  SUPABASE_CONFIG.url,
-  SUPABASE_CONFIG.anonKey
+  SUPABASE_URL,
+  SUPABASE_ANON_KEY
 );
 
 // Check authentication on page load
