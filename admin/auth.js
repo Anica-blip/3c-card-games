@@ -1,165 +1,139 @@
-# GitHub OAuth Setup for 3C Card Games Admin
+/**
+ * 3C Card Games - Authentication Handler
+ * ───────────────────────────────────────
+ * GitHub OAuth login via Supabase
+ */
 
-This guide will help you set up GitHub OAuth authentication to protect your admin panel.
+// Initialize Supabase client
+const supabase = window.supabase.createClient(
+  SUPABASE_URL,
+  SUPABASE_ANON_KEY
+);
 
----
+// DOM elements
+const githubLoginBtn = document.getElementById('github-login-btn');
+const errorMessage = document.getElementById('error-message');
+const successMessage = document.getElementById('success-message');
 
-## Step 1: Enable GitHub OAuth in Supabase
+// Show error message
+function showError(message) {
+  if (errorMessage) {
+    errorMessage.textContent = message;
+    errorMessage.classList.add('show');
+    setTimeout(() => {
+      errorMessage.classList.remove('show');
+    }, 5000);
+  }
+}
 
-1. **Go to your Supabase Dashboard**
-   - Navigate to: https://supabase.com/dashboard/project/cgxjqsbrditbteqhdyus
+// Show success message
+function showSuccess(message) {
+  if (successMessage) {
+    successMessage.textContent = message;
+    successMessage.classList.add('show');
+    setTimeout(() => {
+      successMessage.classList.remove('show');
+    }, 3000);
+  }
+}
 
-2. **Open Authentication Settings**
-   - Click on **Authentication** in the left sidebar
-   - Click on **Providers**
+// GitHub OAuth login
+async function loginWithGitHub() {
+  try {
+    githubLoginBtn.disabled = true;
+    githubLoginBtn.textContent = 'Connecting...';
 
-3. **Enable GitHub Provider**
-   - Find **GitHub** in the list of providers
-   - Toggle it to **Enabled**
+    const { data, error } = await supabase.auth.signInWithOAuth({
+      provider: 'github',
+      options: {
+        redirectTo: REDIRECT_CONFIG.loginRedirect
+      }
+    });
 
-4. **Create a GitHub OAuth App**
-   - Go to GitHub: https://github.com/settings/developers
-   - Click **New OAuth App**
-   - Fill in the details:
-     - **Application name**: `3C Card Games Admin`
-     - **Homepage URL**: `https://anica-blip.github.io/3c-card-games/`
-     - **Authorization callback URL**: `https://cgxjqsbrditbteqhdyus.supabase.co/auth/v1/callback`
-   - Click **Register application**
+    if (error) {
+      throw error;
+    }
 
-5. **Copy GitHub OAuth Credentials**
-   - Copy the **Client ID**
-   - Click **Generate a new client secret** and copy it
+    // OAuth will redirect automatically
+    showSuccess('Redirecting to GitHub...');
 
-6. **Add Credentials to Supabase**
-   - Go back to Supabase → Authentication → Providers → GitHub
-   - Paste the **Client ID** in the GitHub Client ID field
-   - Paste the **Client Secret** in the GitHub Client Secret field
-   - Click **Save**
+  } catch (error) {
+    console.error('Login error:', error);
+    showError('Login failed: ' + error.message);
+    githubLoginBtn.disabled = false;
+    githubLoginBtn.innerHTML = `
+      <svg style="width: 20px; height: 20px; margin-right: 10px; vertical-align: middle;" fill="currentColor" viewBox="0 0 24 24">
+        <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+      </svg>
+      GitHub Access Connection
+    `;
+  }
+}
 
----
+// Check if user is already logged in (for admin pages)
+async function checkAuth() {
+  try {
+    const { data: { session }, error } = await supabase.auth.getSession();
 
-## Step 2: Add Auth Protection to Admin Pages
+    if (error) {
+      throw error;
+    }
 
-You need to add the authentication check script to your admin pages.
+    if (!session) {
+      // Not logged in - redirect to login page
+      window.location.href = REDIRECT_CONFIG.logoutRedirect;
+      return false;
+    }
 
-### For `admin/index.html`:
+    return true;
 
-Add these lines **after** the existing `<script>` tags but **before** the closing `</head>` tag:
+  } catch (error) {
+    console.error('Auth check error:', error);
+    window.location.href = REDIRECT_CONFIG.logoutRedirect;
+    return false;
+  }
+}
 
-```html
-<!-- Auth Protection -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="config.js"></script>
-<script src="auth-check.js"></script>
-```
+// Logout function
+async function logout() {
+  try {
+    const { error } = await supabase.auth.signOut();
+    
+    if (error) {
+      throw error;
+    }
 
-### For `admin/landing-upload.html`:
+    window.location.href = REDIRECT_CONFIG.logoutRedirect;
 
-Add the same lines in the `<head>` section:
+  } catch (error) {
+    console.error('Logout error:', error);
+    showError('Logout failed: ' + error.message);
+  }
+}
 
-```html
-<!-- Auth Protection -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="config.js"></script>
-<script src="auth-check.js"></script>
-```
+// Event listeners
+if (githubLoginBtn) {
+  githubLoginBtn.addEventListener('click', loginWithGitHub);
+}
 
----
+// Handle OAuth callback
+window.addEventListener('load', async () => {
+  // Check for OAuth callback hash
+  const hashParams = new URLSearchParams(window.location.hash.substring(1));
+  
+  if (hashParams.get('access_token')) {
+    // OAuth callback - Supabase will handle this automatically
+    showSuccess('Login successful! Redirecting...');
+    
+    // Wait a moment for Supabase to process the session
+    setTimeout(() => {
+      window.location.href = REDIRECT_CONFIG.loginRedirect;
+    }, 1500);
+  }
+});
 
-## Step 3: Add Logout Button (Optional)
-
-If you want to add a logout button to your admin pages, add this HTML wherever you want the button to appear:
-
-```html
-<button id="logoutBtn" style="background: #e74c3c; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;">
-  Logout
-</button>
-```
-
-The `auth-check.js` script will automatically wire up the logout functionality.
-
----
-
-## Step 4: Test the Login Flow
-
-1. **Push all files to GitHub**:
-   - `admin/config.js`
-   - `admin/auth.js`
-   - `admin/auth-check.js`
-   - `admin/login.html` (already updated)
-   - `admin/index.html` (after adding auth scripts)
-   - `admin/landing-upload.html` (after adding auth scripts)
-
-2. **Wait for GitHub Pages to deploy** (usually 1-2 minutes)
-
-3. **Test the flow**:
-   - Visit: `https://anica-blip.github.io/3c-card-games/admin/login.html`
-   - Click **GitHub Access Connection**
-   - Authorize the app on GitHub
-   - You should be redirected to `admin/index.html`
-
-4. **Test protection**:
-   - Try visiting `admin/index.html` directly without logging in
-   - You should be redirected to the login page
-
----
-
-## How It Works
-
-1. **Login Page** (`login.html`):
-   - User clicks "GitHub Access Connection"
-   - Redirects to GitHub for authorization
-   - GitHub redirects back to Supabase
-   - Supabase creates a session and redirects to `admin/index.html`
-
-2. **Protected Pages** (`index.html`, `landing-upload.html`):
-   - `auth-check.js` runs on page load
-   - Checks if user has a valid Supabase session
-   - If no session → redirect to `login.html`
-   - If session exists → allow access
-
-3. **Logout**:
-   - Click logout button
-   - Session is cleared
-   - Redirect to `login.html`
-
----
-
-## Troubleshooting
-
-### "Login failed: Invalid provider"
-- Make sure GitHub OAuth is enabled in Supabase
-- Check that Client ID and Secret are correctly entered
-
-### "Authorization callback URL mismatch"
-- Verify the callback URL in GitHub OAuth app is: `https://cgxjqsbrditbteqhdyus.supabase.co/auth/v1/callback`
-
-### Stuck in redirect loop
-- Clear browser cookies and cache
-- Try in incognito/private mode
-- Check browser console for errors
-
-### Can't access admin pages
-- Make sure you've added the auth scripts to the HTML files
-- Check that the files are deployed to GitHub Pages
-- Verify you're logged in by checking Supabase dashboard → Authentication → Users
-
----
-
-## Security Notes
-
-- Only users who authenticate via GitHub can access the admin panel
-- Sessions expire after 1 hour of inactivity (Supabase default)
-- You can restrict access to specific GitHub users by adding Row Level Security (RLS) policies in Supabase
-- The public game URLs (`landing.html?deck=...`) remain publicly accessible
-
----
-
-## Files Created
-
-✅ `admin/config.js` - Supabase configuration
-✅ `admin/auth.js` - Login logic for login.html
-✅ `admin/auth-check.js` - Protection script for admin pages
-✅ `admin/login.html` - Login page (already updated)
-
-**Next steps**: Add auth scripts to `index.html` and `landing-upload.html` as shown in Step 2.
+// Export functions for use in admin pages
+window.authHelpers = {
+  checkAuth,
+  logout
+};
