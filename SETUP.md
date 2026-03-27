@@ -253,17 +253,18 @@ npx wrangler deploy
 - Binding: `CARD_GAMES_BUCKET` → `3c-library-files` (set in Cloudflare dashboard)
 - No secret environment variables required
 
-### 3. Vercel Deployment
-- Project: `3c-card-games`
-- Deployment: Vercel handles authentication for admin panel
+### 3. GitHub Pages
 - Repository: `anica-blip/3c-card-games`
+- Pages source: `main` branch, root `/`
+- Admin protected by GitHub OAuth login
 
 **Live URLs:**
 ```
-Admin:          https://3c-card-games.vercel.app/admin/index.html
-Landing upload: https://3c-card-games.vercel.app/admin/landing-upload.html
-Public game:    https://3c-card-games.vercel.app/public/index.html?deck={slug}
-Shared URL:     https://3c-card-games.vercel.app/landing.html?deck={slug}
+Admin login:    https://anica-blip.github.io/3c-card-games/admin/login.html
+Admin panel:    https://anica-blip.github.io/3c-card-games/admin/index.html
+Landing upload: https://anica-blip.github.io/3c-card-games/admin/landing-upload.html
+Public game:    https://anica-blip.github.io/3c-card-games/public/index.html?deck={slug}
+Shared URL:     https://anica-blip.github.io/3c-card-games/landing.html?deck={slug}
 ```
 
 ---
