@@ -17,7 +17,7 @@ import { fetchAllDecks, generateNextSlug, saveDeck, deleteDeck } from './supabas
 /* ── CONFIG ─────────────────────────────────────────── */
 const WORKER_URL    = 'https://3c-card-games.3c-innertherapy.workers.dev';
 const R2_PUBLIC     = 'https://files.3c-public-library.org/CardGames';
-const PUBLIC_APP    = 'https://3c-card-games.vercel.app/landing.html';
+const PUBLIC_APP    = 'https://anica-blip.github.io/3c-card-games/landing.html';
 const $  = (sel) => document.querySelector(sel);
 
 /* ── STATE ──────────────────────────────────────────── */
