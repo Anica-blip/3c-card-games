@@ -4,12 +4,12 @@
   window.__AUTH_LOADED__ = true;
 
   if (!window.supabase?.createClient) {
-    console.error("Supabase JS not loaded.");
+    console.error("Supabase JS not loaded");
     return;
   }
 
   if (!window.APP_CONFIG?.SUPABASE_URL || !window.APP_CONFIG?.SUPABASE_ANON_KEY) {
-    console.error("APP_CONFIG missing.");
+    console.error("APP_CONFIG missing");
     return;
   }
 
@@ -20,39 +20,40 @@
     );
   }
 
-  async function handleLogin(email, password) {
-    const { error } = await window.sb.auth.signInWithPassword({ email, password });
+  async function signInWithGitHub() {
+    const { error } = await window.sb.auth.signInWithOAuth({
+      provider: "github",
+      options: {
+        redirectTo: "https://anica-blip.github.io/3c-card-games/admin/"
+      }
+    });
+
     if (error) {
+      console.error("GitHub OAuth error:", error.message);
       alert(error.message);
-      return;
     }
-    window.location.href = "./index.html"; // change if your admin landing page differs
   }
 
-  function wireLoginUI() {
-    const form = document.getElementById("login-form");
-    const emailEl = document.getElementById("email");
-    const passEl = document.getElementById("password");
-    const btn = document.getElementById("login-button");
+  function wireButton() {
+    const btn =
+      document.getElementById("github-login-btn") ||
+      document.getElementById("login-button") ||
+      document.querySelector("[data-github-login]");
 
-    if (form) {
-      form.addEventListener("submit", async (e) => {
-        e.preventDefault();
-        await handleLogin(emailEl?.value?.trim() || "", passEl?.value || "");
-      });
+    if (!btn) {
+      console.warn("GitHub login button not found");
+      return;
     }
 
-    if (btn && !form) {
-      btn.addEventListener("click", async (e) => {
-        e.preventDefault();
-        await handleLogin(emailEl?.value?.trim() || "", passEl?.value || "");
-      });
-    }
+    btn.addEventListener("click", async (e) => {
+      e.preventDefault();
+      await signInWithGitHub();
+    });
   }
 
   if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", wireLoginUI);
+    document.addEventListener("DOMContentLoaded", wireButton);
   } else {
-    wireLoginUI();
+    wireButton();
   }
 })();
