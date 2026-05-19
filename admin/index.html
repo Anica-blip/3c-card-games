@@ -11,7 +11,41 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
   <link rel="stylesheet" href="admin.css" />
-  
+
+  <!-- R2 URL input styles -->
+  <style>
+    .r2-url-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 6px;
+      flex-wrap: wrap;
+    }
+    .r2-or {
+      font-size: 0.78em;
+      color: #888;
+      white-space: nowrap;
+    }
+    .r2-url-input {
+      flex: 1;
+      min-width: 180px;
+      max-width: 340px;
+      padding: 5px 8px;
+      font-size: 0.8em;
+      border: 1px solid #555;
+      border-radius: 4px;
+      background: #1a1a2e;
+      color: #ccc;
+      outline: none;
+    }
+    .r2-url-input:focus {
+      border-color: #4682b4;
+    }
+    .r2-url-input::placeholder {
+      color: #555;
+    }
+  </style>
+
   <!-- Auth Protection -->
   <script src="./config.js"></script>
   <script src="./auth.js"></script>
@@ -74,18 +108,38 @@
       <!-- ── INTRO & FINALE uploads (after URL block) ── -->
       <div id="deckMediaRow">
 
+        <!-- INTRO -->
         <div class="media-slot">
           <label class="media-label">Intro</label>
           <label class="upload-btn" for="uploadIntro">📁 Upload from computer</label>
           <input type="file" id="uploadIntro" accept="image/*,video/*" style="display:none;" />
           <span id="uploadIntroName" class="upload-filename">No file chosen</span>
+          <div class="r2-url-row">
+            <span class="r2-or">or paste R2 URL</span>
+            <input
+              type="text"
+              id="introR2Url"
+              class="r2-url-input"
+              placeholder="https://files.3c-public-library.org/…"
+            />
+          </div>
         </div>
 
+        <!-- FINALE -->
         <div class="media-slot">
           <label class="media-label">Finale</label>
           <label class="upload-btn" for="uploadFinale">📁 Upload from computer</label>
           <input type="file" id="uploadFinale" accept="image/*,video/*" style="display:none;" />
           <span id="uploadFinaleName" class="upload-filename">No file chosen</span>
+          <div class="r2-url-row">
+            <span class="r2-or">or paste R2 URL</span>
+            <input
+              type="text"
+              id="finaleR2Url"
+              class="r2-url-input"
+              placeholder="https://files.3c-public-library.org/…"
+            />
+          </div>
         </div>
 
       </div>
@@ -96,15 +150,6 @@
     <div class="row-flex">
 
       <!-- ── SIDEBAR ──────────────────────────────── -->
-      <!--
-        Card order displayed top to bottom:
-        [Intro]  ← fixed slot at top
-        [Card 01]
-        [Card 02]
-        ...
-        [+ Add Card]  ← always below last card
-        [Finale] ← fixed slot at bottom
-      -->
       <div class="sidebar">
 
         <div class="page-list">
@@ -125,7 +170,7 @@
           <!-- CARDS list — injected by renderSidebar() -->
           <ul id="cardThumbList"></ul>
 
-          <!-- ADD CARD — sits below last card, above Finale -->
+          <!-- ADD CARD -->
           <div class="add-card-wrap">
             <button id="addCardBtn">+ Add Card</button>
           </div>
@@ -164,6 +209,15 @@
                 <label class="upload-btn" for="uploadIntroCanvas">📁 Upload from computer</label>
                 <input type="file" id="uploadIntroCanvas" accept="image/*,video/*" style="display:none;" />
                 <span id="uploadIntroCanvasName" class="upload-filename">No file chosen</span>
+                <div class="r2-url-row">
+                  <span class="r2-or">or paste R2 URL</span>
+                  <input
+                    type="text"
+                    id="introCanvasR2Url"
+                    class="r2-url-input"
+                    placeholder="https://files.3c-public-library.org/…"
+                  />
+                </div>
               </div>
               <div class="editor-canvas">
                 <img  class="bg" id="introCanvasImg"   src="" alt="" style="display:none;" />
@@ -230,6 +284,15 @@
                 <label class="upload-btn" for="uploadFinaleCanvas">📁 Upload from computer</label>
                 <input type="file" id="uploadFinaleCanvas" accept="image/*,video/*" style="display:none;" />
                 <span id="uploadFinaleCanvasName" class="upload-filename">No file chosen</span>
+                <div class="r2-url-row">
+                  <span class="r2-or">or paste R2 URL</span>
+                  <input
+                    type="text"
+                    id="finaleCanvasR2Url"
+                    class="r2-url-input"
+                    placeholder="https://files.3c-public-library.org/…"
+                  />
+                </div>
               </div>
               <div class="editor-canvas">
                 <img  class="bg" id="finaleCanvasImg"   src="" alt="" style="display:none;" />
