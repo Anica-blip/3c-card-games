@@ -6,8 +6,8 @@
  * Supabase holds the deck index (slug, title, url, r2_key).
  *
  * JSON fields saved:
- *   intro   → public/index.html screen-intro  (loaded from computer in admin)
- *   finale  → public/index.html screen-finale (loaded from computer in admin)
+ *   intro   → public/index.html screen-intro  (loaded from computer or R2 URL)
+ *   finale  → public/index.html screen-finale (loaded from computer or R2 URL)
  *   cards[] → front + back per card           (loaded from computer in admin)
  *   landing → patched separately by landing-upload.html after upload to R2
  */
@@ -83,6 +83,17 @@ async function onNewDeck() {
   };
 
   selectedCardIdx = -1;
+
+  // Clear R2 URL inputs on new deck
+  const introR2      = $('#introR2Url');
+  const introCanvasR2 = $('#introCanvasR2Url');
+  const finaleR2     = $('#finaleR2Url');
+  const finaleCanvasR2 = $('#finaleCanvasR2Url');
+  if (introR2)       introR2.value       = '';
+  if (introCanvasR2) introCanvasR2.value = '';
+  if (finaleR2)      finaleR2.value      = '';
+  if (finaleCanvasR2) finaleCanvasR2.value = '';
+
   await fetchDeckArchive();
   render();
 }
@@ -206,6 +217,23 @@ async function uploadToR2(file, slug, filename, target, statusEls) {
   }
 }
 
+/* ── APPLY R2 URL DIRECTLY (no upload) ─────────────── */
+/*
+  Called when Chef pastes an existing R2 URL into the
+  intro or finale URL input fields.
+  Sets r2Url directly on deckData — no worker call needed.
+  buildDeckJson() will pick it up automatically.
+*/
+function applyR2Url(target, url, nameEl) {
+  if (!url) return;
+  target.r2Url    = url;
+  target.localUrl = null;
+  target.isVideo  = /\.(mp4|webm|mov|ogg)$/i.test(url);
+  target.filename = url.split('/').pop() || target.filename;
+  if (nameEl) nameEl.textContent = `✅ ${target.filename}`;
+  render();
+}
+
 /* ── WIRE FILE INPUTS AFTER RENDER ──────────────────── */
 function wireUploads() {
   if (!DECK_SLUG) return;
@@ -283,13 +311,68 @@ function wireUploads() {
       { nameEl: $('#uploadFinaleCanvasName'), statusEl: null }
     );
   }
+
+  // ── R2 URL inputs ────────────────────────────────────
+
+  // Intro R2 URL — meta row
+  const introR2 = $('#introR2Url');
+  if (introR2) {
+    // Sync value from deckData on render if input is empty
+    if (!introR2.value && deckData.intro.r2Url) {
+      introR2.value = deckData.intro.r2Url;
+    }
+    introR2.oninput = () => applyR2Url(
+      deckData.intro,
+      introR2.value.trim(),
+      $('#uploadIntroName')
+    );
+  }
+
+  // Intro R2 URL — canvas panel
+  const introCanvasR2 = $('#introCanvasR2Url');
+  if (introCanvasR2) {
+    if (!introCanvasR2.value && deckData.intro.r2Url) {
+      introCanvasR2.value = deckData.intro.r2Url;
+    }
+    introCanvasR2.oninput = () => applyR2Url(
+      deckData.intro,
+      introCanvasR2.value.trim(),
+      $('#uploadIntroCanvasName')
+    );
+  }
+
+  // Finale R2 URL — meta row
+  const finaleR2 = $('#finaleR2Url');
+  if (finaleR2) {
+    if (!finaleR2.value && deckData.finale.r2Url) {
+      finaleR2.value = deckData.finale.r2Url;
+    }
+    finaleR2.oninput = () => applyR2Url(
+      deckData.finale,
+      finaleR2.value.trim(),
+      $('#uploadFinaleName')
+    );
+  }
+
+  // Finale R2 URL — canvas panel
+  const finaleCanvasR2 = $('#finaleCanvasR2Url');
+  if (finaleCanvasR2) {
+    if (!finaleCanvasR2.value && deckData.finale.r2Url) {
+      finaleCanvasR2.value = deckData.finale.r2Url;
+    }
+    finaleCanvasR2.oninput = () => applyR2Url(
+      deckData.finale,
+      finaleCanvasR2.value.trim(),
+      $('#uploadFinaleCanvasName')
+    );
+  }
 }
 
 /* ── BUILD DECK JSON FOR SAVING ─────────────────────── */
 /*
-  Uses r2Url stored after each file is uploaded to R2.
-  Falls back to auto-constructed URL if not yet uploaded
-  (so slug + filename convention still applies).
+  Uses r2Url stored after each file is uploaded to R2
+  OR after a URL is pasted directly into the R2 URL inputs.
+  Falls back to auto-constructed URL if neither is set.
   landing field is patched separately by landing-upload.html.
 */
 function buildDeckJson() {
@@ -402,6 +485,16 @@ async function onLoadDeckFromArchive(slug) {
       }))
     };
 
+    // Clear and re-sync URL inputs with loaded deck data
+    const introR2       = $('#introR2Url');
+    const introCanvasR2 = $('#introCanvasR2Url');
+    const finaleR2      = $('#finaleR2Url');
+    const finaleCanvasR2 = $('#finaleCanvasR2Url');
+    if (introR2)        introR2.value        = deckData.intro.r2Url  || '';
+    if (introCanvasR2)  introCanvasR2.value  = deckData.intro.r2Url  || '';
+    if (finaleR2)       finaleR2.value       = deckData.finale.r2Url || '';
+    if (finaleCanvasR2) finaleCanvasR2.value = deckData.finale.r2Url || '';
+
     selectedCardIdx = deckData.cards.length > 0 ? 0 : -1;
     await fetchDeckArchive();
     render();
@@ -434,6 +527,16 @@ async function onDeleteDeck(slug) {
       DECK_URL   = '';
       deckData = { slug: '', title: '', intro: { filename: 'intro.png', localUrl: null, r2Url: null, isVideo: false }, finale: { filename: 'finale.png', localUrl: null, r2Url: null, isVideo: false }, cards: [] };
       selectedCardIdx = -1;
+
+      // Clear URL inputs on delete
+      const introR2       = $('#introR2Url');
+      const introCanvasR2 = $('#introCanvasR2Url');
+      const finaleR2      = $('#finaleR2Url');
+      const finaleCanvasR2 = $('#finaleCanvasR2Url');
+      if (introR2)        introR2.value        = '';
+      if (introCanvasR2)  introCanvasR2.value  = '';
+      if (finaleR2)       finaleR2.value       = '';
+      if (finaleCanvasR2) finaleCanvasR2.value = '';
     }
     await fetchDeckArchive();
     render();
@@ -507,7 +610,9 @@ function renderCardEditor() {
   if (selectedSlot === 'intro') {
     if (panelIntro) panelIntro.style.display = 'block';
     const n = $('#uploadIntroCanvasName');
-    if (n) n.textContent = deckData.intro.filename;
+    if (n) n.textContent = deckData.intro.r2Url
+      ? `✅ ${deckData.intro.filename}`
+      : deckData.intro.filename;
     updatePreview(deckData.intro, '#introCanvasImg', '#introCanvasVideo', '#introCanvasEmpty');
     return;
   }
@@ -516,7 +621,9 @@ function renderCardEditor() {
   if (selectedSlot === 'finale') {
     if (panelFinale) panelFinale.style.display = 'block';
     const n = $('#uploadFinaleCanvasName');
-    if (n) n.textContent = deckData.finale.filename;
+    if (n) n.textContent = deckData.finale.r2Url
+      ? `✅ ${deckData.finale.filename}`
+      : deckData.finale.filename;
     updatePreview(deckData.finale, '#finaleCanvasImg', '#finaleCanvasVideo', '#finaleCanvasEmpty');
     return;
   }
@@ -541,8 +648,12 @@ function renderCardEditor() {
     // Sync meta row labels
     const introName  = $('#uploadIntroName');
     const finaleName = $('#uploadFinaleName');
-    if (introName)  introName.textContent  = deckData.intro.filename;
-    if (finaleName) finaleName.textContent = deckData.finale.filename;
+    if (introName)  introName.textContent  = deckData.intro.r2Url
+      ? `✅ ${deckData.intro.filename}`
+      : deckData.intro.filename;
+    if (finaleName) finaleName.textContent = deckData.finale.r2Url
+      ? `✅ ${deckData.finale.filename}`
+      : deckData.finale.filename;
     return;
   }
 
@@ -556,7 +667,7 @@ function updatePreview(target, imgSel, videoSel, emptySel) {
   const videoEl = $(videoSel);
   const emptyEl = $(emptySel);
 
-  // Use localUrl first (just uploaded), fall back to r2Url (loaded from archive)
+  // Use localUrl first (just uploaded), fall back to r2Url (loaded from archive or pasted)
   const previewUrl = target.localUrl || target.r2Url || null;
 
   if (!previewUrl) {
