@@ -890,6 +890,14 @@
 
     // CLOSE → close tab / return to landing
     document.getElementById('btnClose').onclick = () => {
+      // Running inside the Vault's iframe modal — ask the parent page
+      // to close the modal. Skips window.close() (never works here)
+      // and skips the local landing.html fallback (unpredictable once
+      // embedded in someone else's page).
+      if (window.parent && window.parent !== window) {
+        window.parent.postMessage({ type: 'vault-close-modal' }, '*');
+        return;
+      }
       window.close();
       setTimeout(() => {
         window.location.href =
