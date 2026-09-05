@@ -706,9 +706,10 @@ async function renderDeckArchive() {
     return;
   }
 
+  // Highest deck # first (deck.05 above deck.01) — ignores title entirely
   const sorted = [...deckArchive].sort((a, b) => {
     const n = d => parseInt((d.deck_slug.match(/\.(\d+)$/) || [])[1] || 0);
-    return n(a) - n(b);
+    return n(b) - n(a);
   });
 
   container.innerHTML = `
@@ -716,13 +717,13 @@ async function renderDeckArchive() {
       <h2 style="margin-bottom:8px; color:#4682b4;">Deck Archive</h2>
       <table style="width:100%; border-collapse:collapse;">
         <thead>
-          <tr style="background:#eaf4fc;">
-            <th style="text-align:left; padding:8px;">Edit</th>
-            <th style="text-align:left; padding:8px;">Deck #</th>
-            <th style="text-align:left; padding:8px;">Title</th>
-            <th style="text-align:left; padding:8px;">Cards</th>
-            <th style="text-align:left; padding:8px;">URL</th>
-            <th style="text-align:left; padding:8px;">Delete</th>
+          <tr style="background:#1a1a2e;">
+            <th style="text-align:left; padding:8px; color:#4682b4;">Edit</th>
+            <th style="text-align:left; padding:8px; color:#4682b4;">Deck #</th>
+            <th style="text-align:left; padding:8px; color:#4682b4;">Title</th>
+            <th style="text-align:left; padding:8px; color:#4682b4;">Cards</th>
+            <th style="text-align:left; padding:8px; color:#4682b4;">URL</th>
+            <th style="text-align:left; padding:8px; color:#4682b4;">Delete</th>
           </tr>
         </thead>
         <tbody>
