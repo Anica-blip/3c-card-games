@@ -48,10 +48,15 @@ Shared URL → landing.html?deck=deck.01
 | Layer | Technology |
 |---|---|
 | Frontend | Vanilla HTML / CSS / JS |
+| Sign-in | GitHub through Supabase (owner only) |
 | Database | Supabase (deck index) |
-| File Storage | Cloudflare R2 (JSON + landing media) |
-| Worker | Cloudflare Worker (R2 write API) |
+| File Storage | Cloudflare R2 (JSON + landing media + card images) |
+| Worker | Cloudflare Worker (R2 API, writes are owner-only) |
 | Hosting | GitHub Pages |
+
+Admin access is owner-only: sign in with GitHub, and the Worker checks the
+owner before any save, delete or upload. Anyone can play a deck; only the
+owner can change one. No secrets are stored in this repository.
 
 ---
 
@@ -64,13 +69,17 @@ Shared URL → landing.html?deck=deck.01
 ├── public/
 │   └── index.html              ← Full card game (5 screens)
 ├── admin/
+│   ├── login.html              ← Sign in with GitHub
+│   ├── auth.js                 ← Sign-in + owner check for every admin page
+│   ├── config.js
+│   ├── supabaseAPI.js
 │   ├── index.html              ← Deck editor
 │   ├── admin.app.js
 │   ├── admin.css
 │   └── landing-upload.html     ← Landing media uploader
 └── worker/
     ├── worker.js               ← Cloudflare Worker
-    └── wrangler.toml
+    └── wrangler.toml           ← Deployed with Wrangler (see SETUP.md)
 ```
 
 ---
@@ -84,7 +93,7 @@ R2 file conventions, Supabase schema, Worker routes, and workflow guides.
 
 ## Adding a New Deck
 
-1. Open Admin Panel → **New Deck**
+1. Open Admin Panel → sign in with GitHub → **New Deck**
 2. Add title + cards (upload front & back images from computer)
 3. **Save Deck** → JSON pushed to R2, URL generated
 4. Open **Landing Upload** → select deck → upload landing image or video
