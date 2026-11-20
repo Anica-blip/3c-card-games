@@ -12,7 +12,7 @@
   
   <!-- Auth Protection -->
   <script src="config.js"></script>
-  <script src="auth-check.js"></script>
+  <script src="auth.js"></script>
 
   <style>
     /* ── BRAND VARIABLES (matches admin panel) ── */
@@ -479,7 +479,7 @@
   </div><!-- /workspace -->
 
 <script type="module">
-  import { fetchAllDecks } from './supabaseAPI.js';
+  import { fetchAllDecks, authHeaders } from './supabaseAPI.js';
 
   const WORKER_URL = 'https://3c-card-games.3c-innertherapy.workers.dev';
 
@@ -581,10 +581,10 @@
 
       const uploadRes = await fetch(`${WORKER_URL}/landing/${slug}`, {
         method:  'PUT',
-        headers: {
+        headers: await authHeaders({
           'Content-Type':     selectedFile.type || 'application/octet-stream',
           'X-File-Extension': ext,
-        },
+        }),
         body: selectedFile,
       });
 
@@ -607,7 +607,7 @@
 
       const saveRes = await fetch(`${WORKER_URL}/deck/${slug}`, {
         method:  'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: await authHeaders({ 'Content-Type': 'application/json' }),
         body:    JSON.stringify(deckJson, null, 2),
       });
 
