@@ -1,19 +1,19 @@
 /**
- * 3C Card Games — Cloudflare Worker
+ * 3C Word Search — Cloudflare Worker
  * ─────────────────────────────────────────────────────────────
  * Built by Claude (Anthropic) × Chef Anica · 3C Thread To Success
  *
  * ROUTE TABLE
- *   PUBLIC — no sign-in, read only (the public deck pages need this)
- *     GET    /deck/:slug               → fetch CardGames/{slug}/deck.json
+ *   PUBLIC — no sign-in, read only (the puzzle pages need this)
+ *     GET    /puzzle/:slug             → fetch WordSearch/{slug}.json
  *   OWNER ONLY — Supabase GitHub sign-in, then rpc/is_owner must return true
- *     PUT    /deck/:slug               → save   CardGames/{slug}/deck.json
- *     DELETE /deck/:slug               → delete CardGames/{slug}/deck.json
+ *     PUT    /puzzle/:slug             → save   WordSearch/{slug}.json
+ *     DELETE /puzzle/:slug             → delete WordSearch/{slug}.json
  *     PUT    /landing/:slug            → save landing image/video
  *                                        (extension in the X-File-Extension header)
- *                                        stored at CardGames/{slug}/landing.{ext}
- *     PUT    /media/:slug/:filename    → save intro / finale / card front / card back
- *                                        stored at CardGames/{slug}/{filename}
+ *                                        stored at WordSearch/{slug}/landing.{ext}
+ *     PUT    /media/:slug/:filename    → save background / intro / finale media
+ *                                        stored at WordSearch/{slug}/{filename}
  *   Anything else: 404 (unknown address) or 405 (wrong method).
  *
  * LOGIN
@@ -26,7 +26,7 @@
  *   Supabase address and the anon key below are public by design.
  *
  * STORAGE
- *   R2 binding CARD_GAMES_BUCKET → bucket 3c-library-files, folder CardGames/
+ *   R2 binding WORDSEARCH_BUCKET → bucket 3c-library-files, folder WordSearch/
  *   Allowed media: png, jpg, jpeg, gif, webp, mp4, webm, mov, ogg
  *
  * DEPLOY
@@ -43,7 +43,7 @@ const ALLOWED_ORIGINS = ['https://anica-blip.github.io'];
 const PUBLIC_BASE = 'https://files.3c-public-library.org/';
 
 // Limits
-const MAX_JSON_BYTES   = 1000000;            // one deck file
+const MAX_JSON_BYTES   = 1000000;            // one puzzle file
 const MAX_UPLOAD_BYTES = 90 * 1024 * 1024;   // one media file
 
 /* ── MIME type map (also the list of allowed upload types) ── */
@@ -103,7 +103,7 @@ export default {
       if (err instanceof HttpError) {
         response = json({ error: err.message }, err.status);
       } else {
-        console.error('cardgames error:', err && err.message ? err.message : err);
+        console.error('wordsearch error:', err && err.message ? err.message : err);
         response = json({ error: 'Server error' }, 500);
       }
     }
@@ -123,14 +123,14 @@ function matchRoute(path, method) {
     if (!list.includes(method)) throw new HttpError(405, 'Method not allowed');
   };
 
-  let m = path.match(/^\/deck\/([^/]+)$/);
+  let m = path.match(/^\/puzzle\/([^/]+)$/);
   if (m) {
     const slug = m[1];
     if (!validSlug(slug)) throw new HttpError(404, 'Not found');
     allow(['GET', 'PUT', 'DELETE']);
-    if (method === 'GET')    return { isPublic: true,  run: (req, env) => getDeck(slug, env) };
-    if (method === 'PUT')    return { isPublic: false, run: (req, env) => putDeck(slug, req, env) };
-    return                          { isPublic: false, run: (req, env) => deleteDeck(slug, env) };
+    if (method === 'GET')    return { isPublic: true,  run: (req, env) => getPuzzle(slug, env) };
+    if (method === 'PUT')    return { isPublic: false, run: (req, env) => putPuzzle(slug, req, env) };
+    return                          { isPublic: false, run: (req, env) => deletePuzzle(slug, env) };
   }
 
   m = path.match(/^\/landing\/([^/]+)$/);
@@ -186,18 +186,18 @@ async function requireOwner(request) {
   if (answer !== true) throw new HttpError(403, 'Not allowed');
 }
 
-/* ── Deck JSON ────────────────────────────────────── */
+/* ── Puzzle JSON ──────────────────────────────────── */
 
-async function getDeck(slug, env) {
-  const obj = await env.CARD_GAMES_BUCKET.get(`CardGames/${slug}/deck.json`);
-  if (!obj) throw new HttpError(404, `Deck not found: ${slug}`);
+async function getPuzzle(slug, env) {
+  const obj = await env.WORDSEARCH_BUCKET.get(`WordSearch/${slug}.json`);
+  if (!obj) throw new HttpError(404, `Puzzle not found: ${slug}`);
   return new Response(await obj.text(), {
     status: 200,
     headers: { 'Content-Type': 'application/json' },
   });
 }
 
-async function putDeck(slug, request, env) {
+async function putPuzzle(slug, request, env) {
   const declared = parseInt(request.headers.get('Content-Length') || '0', 10);
   if (declared > MAX_JSON_BYTES) throw new HttpError(413, 'Request too large');
 
@@ -210,16 +210,16 @@ async function putDeck(slug, request, env) {
     throw new HttpError(400, 'Invalid JSON body');
   }
 
-  const r2Key = `CardGames/${slug}/deck.json`;
-  await env.CARD_GAMES_BUCKET.put(r2Key, body, {
+  const r2Key = `WordSearch/${slug}.json`;
+  await env.WORDSEARCH_BUCKET.put(r2Key, body, {
     httpMetadata: { contentType: 'application/json' },
   });
   return json({ ok: true, r2_key: r2Key });
 }
 
-async function deleteDeck(slug, env) {
-  const r2Key = `CardGames/${slug}/deck.json`;
-  await env.CARD_GAMES_BUCKET.delete(r2Key);
+async function deletePuzzle(slug, env) {
+  const r2Key = `WordSearch/${slug}.json`;
+  await env.WORDSEARCH_BUCKET.delete(r2Key);
   return json({ ok: true, deleted: r2Key });
 }
 
@@ -238,7 +238,7 @@ async function storeBinary(request, env, r2Key, ext) {
   if (buffer.byteLength === 0) throw new HttpError(400, 'Empty file body');
   if (buffer.byteLength > MAX_UPLOAD_BYTES) throw new HttpError(413, 'File too large');
 
-  await env.CARD_GAMES_BUCKET.put(r2Key, buffer, {
+  await env.WORDSEARCH_BUCKET.put(r2Key, buffer, {
     httpMetadata: { contentType: mimeType },
   });
 
@@ -249,7 +249,7 @@ async function putLanding(slug, request, env) {
   const ext = (request.headers.get('X-File-Extension') || 'png')
     .toLowerCase()
     .replace(/^\./, '');
-  return storeBinary(request, env, `CardGames/${slug}/landing.${ext}`, ext);
+  return storeBinary(request, env, `WordSearch/${slug}/landing.${ext}`, ext);
 }
 
 async function putMedia(slug, filename, request, env) {
@@ -257,12 +257,12 @@ async function putMedia(slug, filename, request, env) {
     throw new HttpError(400, 'Invalid file name');
   }
   const ext = filename.split('.').pop().toLowerCase();
-  return storeBinary(request, env, `CardGames/${slug}/${filename}`, ext);
+  return storeBinary(request, env, `WordSearch/${slug}/${filename}`, ext);
 }
 
 /* ── CORS / JSON ──────────────────────────────────── */
 
-// Deck reads are open to every website. Owner-only routes answer only the
+// Puzzle reads are open to every website. Owner-only routes answer only the
 // allowed website (and say so with Vary: Origin).
 function withCors(response, origin, originAllowed, isPublic) {
   const res = new Response(response.body, response);
