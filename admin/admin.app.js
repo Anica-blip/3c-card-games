@@ -12,7 +12,7 @@
  *   landing → patched separately by landing-upload.html after upload to R2
  */
 
-import { fetchAllDecks, generateNextSlug, saveDeck, deleteDeck } from './supabaseAPI.js';
+import { fetchAllDecks, generateNextSlug, saveDeck, deleteDeck, authHeaders } from './supabaseAPI.js';
 
 /* ── CONFIG ─────────────────────────────────────────── */
 const WORKER_URL    = 'https://3c-card-games.3c-innertherapy.workers.dev';
@@ -194,9 +194,9 @@ async function uploadToR2(file, slug, filename, target, statusEls) {
   try {
     const res = await fetch(`${WORKER_URL}/media/${slug}/${cleanFilename}`, {
       method:  'PUT',
-      headers: {
+      headers: await authHeaders({
         'Content-Type': file.type || 'application/octet-stream',
-      },
+      }),
       body: file,
     });
 
@@ -416,7 +416,7 @@ async function onSaveDeck() {
   try {
     const r2Res = await fetch(`${WORKER_URL}/deck/${DECK_SLUG}`, {
       method:  'PUT',
-      headers: { 'Content-Type': 'application/json' },
+      headers: await authHeaders({ 'Content-Type': 'application/json' }),
       body:    JSON.stringify(deckJson, null, 2)
     });
     if (!r2Res.ok) {
@@ -508,9 +508,15 @@ async function onDeleteDeck(slug) {
   if (!confirm(`Delete deck "${slug}" permanently? This cannot be undone.`)) return;
 
   // Delete from R2
+  let r2DeleteFailed = false;
   try {
-    await fetch(`${WORKER_URL}/deck/${slug}`, { method: 'DELETE' });
+    const delRes = await fetch(`${WORKER_URL}/deck/${slug}`, {
+      method:  'DELETE',
+      headers: await authHeaders(),
+    });
+    if (!delRes.ok) r2DeleteFailed = true;
   } catch (err) {
+    r2DeleteFailed = true;
     console.warn('R2 delete failed:', err.message);
   }
 
@@ -540,6 +546,9 @@ async function onDeleteDeck(slug) {
     }
     await fetchDeckArchive();
     render();
+    if (r2DeleteFailed) {
+      alert(`Deck "${slug}" was removed from the list, but its stored file could not be deleted.`);
+    }
   }
 }
 
