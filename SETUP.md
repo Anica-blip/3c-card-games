@@ -1,6 +1,7 @@
 # SETUP.md — 3C Card Games Architecture & Deployment Guide
 
 > Living document. Update this file whenever the architecture changes.
+> Last updated: 20 Nov 2026 — owner-only sign-in (GitHub through Supabase), secured Worker, Wrangler deployment.
 
 ---
 
@@ -9,15 +10,16 @@
 1. [Overview](#overview)
 2. [Repository Structure](#repository-structure)
 3. [Tech Stack](#tech-stack)
-4. [Flow Architecture](#flow-architecture)
-5. [JSON Structure](#json-structure)
-6. [Cloudflare R2 — File Conventions](#cloudflare-r2--file-conventions)
-7. [Supabase — Table & RLS](#supabase--table--rls)
-8. [Cloudflare Worker — Routes](#cloudflare-worker--routes)
-9. [Deployment Steps](#deployment-steps)
-10. [Admin Workflow](#admin-workflow)
-11. [Public User Flow](#public-user-flow)
-12. [Adding a New Deck](#adding-a-new-deck)
+4. [Security Summary](#security-summary)
+5. [Flow Architecture](#flow-architecture)
+6. [JSON Structure](#json-structure)
+7. [Cloudflare R2 — File Conventions](#cloudflare-r2--file-conventions)
+8. [Supabase — Table, RLS & Sign-in](#supabase--table-rls--sign-in)
+9. [Cloudflare Worker — Routes](#cloudflare-worker--routes)
+10. [Deployment Steps](#deployment-steps)
+11. [Admin Workflow](#admin-workflow)
+12. [Public User Flow](#public-user-flow)
+13. [Adding a New Deck](#adding-a-new-deck)
 
 ---
 
@@ -42,18 +44,24 @@ touching any code.
 ├── README.md
 ├── SETUP.md                    ← This file
 ├── LICENSE
+├── LEGAL_DISCLAIMER.md
 │
 ├── public/
 │   └── index.html              ← Full card game app (5 screens)
 │
 ├── admin/
+│   ├── login.html              ← "Sign in with GitHub" page
+│   ├── auth.js                 ← Sign-in + owner check, used by every admin page
+│   ├── config.js               ← Supabase address + public anon key
+│   ├── supabaseAPI.js          ← Supabase calls + authHeaders() (adds the sign-in token)
 │   ├── index.html              ← Deck editor (create, edit, save decks)
 │   ├── admin.app.js            ← Admin logic (Supabase + Worker calls)
 │   ├── admin.css               ← Admin styles
-│   └── landing-upload.html     ← Standalone landing image/video uploader
+│   ├── landing-upload.html     ← Standalone landing image/video uploader
+│   └── signout.js              ← Not used by any page (leftover)
 │
 └── worker/
-    ├── worker.js               ← Cloudflare Worker (R2 read/write/delete)
+    ├── worker.js               ← Cloudflare Worker (R2 read/write/delete + owner check)
     └── wrangler.toml           ← Worker deployment config
 ```
 
@@ -63,12 +71,28 @@ touching any code.
 
 | Layer | Technology | Purpose |
 |---|---|---|
-| Frontend | Vanilla HTML / CSS / JS | Zero dependencies, fast load |
+| Frontend | Vanilla HTML / CSS / JS | Zero build step, fast load |
 | Fonts | Google Fonts (Cinzel + Lato) | Branding |
+| Sign-in | Supabase Auth, GitHub provider (PKCE) | Owner-only admin access |
 | Database | Supabase (PostgreSQL) | Deck index + metadata |
-| File Storage | Cloudflare R2 | Deck JSON + landing media |
-| Worker | Cloudflare Worker | R2 write/read/delete API |
+| File Storage | Cloudflare R2 | Deck JSON + landing media + card images |
+| Worker | Cloudflare Worker | R2 read / write / delete API, owner-checked |
 | Hosting | GitHub Pages | Public + Admin delivery |
+
+---
+
+## Security Summary
+
+| Part | Who can do what |
+|---|---|
+| Public game (`landing.html`, `public/index.html`) | Anyone can play. They only read `GET /deck/:slug`. |
+| Admin pages | Hidden until the owner is signed in with GitHub through Supabase. A signed-in account that is not the owner is signed out with a notice. |
+| Worker write routes (save, delete, upload) | Owner only. Every call must carry the sign-in token; the Worker asks Supabase's `is_owner()` function and refuses anything but `true` (401 no/invalid sign-in, 403 not the owner, 503 if the check cannot be made). |
+| Worker origin | Owner routes are refused for any website other than `https://anica-blip.github.io`. |
+| Supabase table `card_decks` | Public read; writes only by the owner (see below). |
+| Secrets | None. The Worker has no variables and no secrets; the Supabase address and anon key are public by design. |
+
+Sessions refresh themselves. There is no fixed-length session and no lock-out after a set number of days.
 
 ---
 
@@ -78,12 +102,18 @@ touching any code.
 ┌─────────────────────────────────────────────────────┐
 │                     ADMIN SIDE                      │
 │                                                     │
+│  admin/login.html → GitHub sign-in (Supabase)       │
+│    → owner check (is_owner) → admin opens           │
+│                                                     │
 │  admin/index.html                                   │
 │    → Create / edit deck                             │
-│    → Upload card images from computer (preview only)│
+│    → Pick a card/intro/finale image from computer   │
+│        → at once: PUT /media/:slug/:filename        │
+│          → Worker → R2 (preview stays local)        │
 │    → Save Deck                                      │
 │        → PUT /deck/:slug → Worker → R2 (JSON)       │
 │        → Upsert Supabase index row                  │
+│    → Every Worker call sends the sign-in token      │
 │                                                     │
 │  admin/landing-upload.html                          │
 │    → Pick saved deck from Supabase dropdown         │
@@ -95,8 +125,8 @@ touching any code.
 │                    PUBLIC SIDE                      │
 │                                                     │
 │  landing.html?deck=deck.01                          │
-│    → Fetches CardGames/deck.01/deck.json from R2    │
-│    → Loads landing.{ext} from R2                   │
+│    → GET /deck/deck.01 → Worker → R2 (deck.json)    │
+│    → Loads landing.{ext} from R2                    │
 │    → User clicks ENTER                              │
 │        → public/index.html?deck=deck.01             │
 │                                                     │
@@ -145,6 +175,7 @@ CardGames/{slug}/deck.json
 - `cards` array is flexible — add as many or as few cards as needed
 - Card filenames follow strict convention: `card-{nn}-front.{ext}` and `card-{nn}-back.{ext}`
 - Landing media is stored separately — NOT inside the JSON
+- The JSON body sent to the Worker must be a JSON object, up to 1 MB
 
 ---
 
@@ -161,9 +192,9 @@ CardGames/{slug}/deck.json
     └── deck.01/
         ├── deck.json                   ← Saved by worker on Save Deck
         ├── landing.{ext}               ← Saved by worker via landing-upload.html
-        ├── intro.{ext}                 ← URL stored in deck.json (loaded from computer in admin)
-        ├── finale.{ext}                ← URL stored in deck.json (loaded from computer in admin)
-        ├── card-01-front.{ext}         ← URL stored in deck.json (loaded from computer in admin)
+        ├── intro.{ext}                 ← Saved by worker (PUT /media) when the file is picked
+        ├── finale.{ext}                ← Saved by worker (PUT /media) when the file is picked
+        ├── card-01-front.{ext}         ← Saved by worker (PUT /media) when the file is picked
         ├── card-01-back.{ext}
         ├── card-02-front.{ext}
         ├── card-02-back.{ext}
@@ -171,17 +202,28 @@ CardGames/{slug}/deck.json
 ```
 
 **How media gets into R2 — the correct flow:**
-- All media (intro, finale, card front, card back) is loaded from
-  **Chef's computer** in the admin panel for local preview only
-- On **Save Deck** → filenames are auto-constructed into R2 public URLs
-  and stored inside the ONE deck JSON file → pushed to R2 via worker
-- **Landing image/video** is the only file sent directly to R2 —
-  uploaded from computer in `landing-upload.html` → worker stores it
+- All media (intro, finale, card front, card back) is picked from
+  **Chef's computer** in the admin panel. The moment a file is picked it is sent
+  to R2 through the Worker (`PUT /media/:slug/:filename`); the admin keeps a
+  local copy for the preview
+- On **Save Deck** → the R2 public URLs of those files are stored inside the
+  ONE deck JSON file → pushed to R2 via the Worker
+- **Landing image/video** is uploaded from the computer in `landing-upload.html`
+  → the Worker stores it as `landing.{ext}`
 - The public app reads all URLs from the JSON — it never discovers files
+- Every one of these uploads needs the owner's sign-in token
+
+**Upload limits (enforced by the Worker):**
+- Allowed types: png, jpg, jpeg, gif, webp, mp4, webm, mov, ogg (anything else: 415)
+- Maximum size: 90 MB per file; empty files are refused
+- Deck slugs and file names must be safe names (letters, numbers, dot, dash, underscore); anything else is refused
 
 ---
 
-## Supabase — Table & RLS
+## Supabase — Table, RLS & Sign-in
+
+**Supabase project:** "Aurion 3C Mascot" — `cgxjqsbrditbteqhdyus.supabase.co`
+(shared with the library, quiz, notice board and word search)
 
 **Table:** `card_decks`
 
@@ -193,30 +235,31 @@ create table card_decks (
   r2_key      text,
   deck_url    text,
   card_count  int4 default 0,
-  created_at  timestamptz default now()
+  created_at  timestamptz default now(),
+  updated_at  timestamptz default now()
 );
 ```
 
-**RLS Policies (anon key access):**
+**RLS (row level security is ON). Live policies:**
 
-```sql
-alter table card_decks enable row level security;
+| Policy | Applies to | Rule |
+|---|---|---|
+| `anon can read card_decks` | visitors (anon), SELECT | everyone can read the deck list |
+| `authenticated can read card_decks` | signed-in users, SELECT | everyone can read |
+| `card_decks_owner_write` | signed-in users, ALL (insert, update, delete) | only the owner's account (the policy compares the signed-in account's email with the owner's email; the address is kept out of this public file) |
 
-create policy "anon can read card_decks"
-  on card_decks for select to anon using (true);
+There is no public insert, update or delete.
 
-create policy "anon can insert card_decks"
-  on card_decks for insert to anon with check (true);
+**Sign-in settings (Supabase → Authentication):**
+- **Providers:** GitHub enabled.
+- **URL Configuration → Redirect URLs:** must include `https://anica-blip.github.io/3c-card-games/**`
+- **Sessions:** "Time-box user sessions" and "Inactivity timeout" must stay **empty**, otherwise they bring back a fixed lock-out.
 
-create policy "anon can update card_decks"
-  on card_decks for update to anon
-  using (true) with check (true);
-
-create policy "anon can delete card_decks"
-  on card_decks for delete to anon using (true);
-```
-
-**Supabase project:** `cgxjqsbrditbteqhdyus.supabase.co`
+**How the admin signs in (`admin/auth.js`):**
+- GitHub through Supabase (PKCE), own storage name `sb-3c-card-games-login` (all of Chef's GitHub Pages apps share one address, so each app needs its own name).
+- Every admin page (login, deck editor, landing upload) is hidden until the owner check passes.
+- No session → sent to `login.html`. Signed in but not the owner → signed out with a notice. If the owner check cannot be made (for example no network), nobody is signed out.
+- After GitHub, the return address is `https://anica-blip.github.io/3c-card-games/admin/`.
 
 ---
 
@@ -225,38 +268,58 @@ create policy "anon can delete card_decks"
 **Worker name:** `3c-card-games`
 **Worker URL:** `https://3c-card-games.3c-innertherapy.workers.dev`
 **R2 binding:** `CARD_GAMES_BUCKET` → `3c-library-files`
+**Variables / secrets:** none
 
-| Method | Route | Purpose |
-|---|---|---|
-| GET | `/deck/:slug` | Fetch deck JSON from R2 |
-| PUT | `/deck/:slug` | Save deck JSON to R2 |
-| DELETE | `/deck/:slug` | Delete deck JSON from R2 |
-| PUT | `/landing/:slug` | Save landing image/video binary to R2 |
+| Method | Route | Who | Purpose |
+|---|---|---|---|
+| GET | `/deck/:slug` | Public | Fetch deck JSON from R2 |
+| PUT | `/deck/:slug` | Owner only | Save deck JSON to R2 |
+| DELETE | `/deck/:slug` | Owner only | Delete deck JSON from R2 |
+| PUT | `/landing/:slug` | Owner only | Save landing image/video binary to R2 |
+| PUT | `/media/:slug/:filename` | Owner only | Save intro / finale / card front / card back |
 
 **Headers used:**
+- `Authorization: Bearer <token>` — every owner route
 - `Content-Type: application/json` — for deck JSON
 - `X-File-Extension: png` (or mp4, webm etc.) — for landing upload
+
+**Answers:** 401 no/invalid sign-in · 403 not the owner or wrong website · 404 unknown address or missing deck · 405 wrong method · 415 file type not allowed · 503 owner check unavailable · generic "Server error" for anything unexpected (details go to the Worker log, never to the visitor).
 
 ---
 
 ## Deployment Steps
 
 ### 1. Supabase
-- Project already live at `cgxjqsbrditbteqhdyus.supabase.co`
-- Table `card_decks` created with RLS policies ✅
+- Project already live: "Aurion 3C Mascot" (`cgxjqsbrditbteqhdyus`)
+- Table `card_decks` with RLS and the policies above ✅
+- GitHub provider on, redirect URL `https://anica-blip.github.io/3c-card-games/**` added ✅
 
-### 2. Cloudflare Worker
+### 2. Cloudflare Worker — Wrangler only
+This Worker is deployed with **Wrangler, from a deploy folder** that holds
+`worker.js` and `wrangler.toml` side by side (copies of the repo's `worker/` folder).
+**Never paste the code into the Cloudflare dashboard**: a Wrangler deploy replaces the
+Worker's code, variables and bindings with what is in `wrangler.toml`, and mixing the
+two methods stopped the Worker's reads working once (20 Nov 2026).
+
 ```bash
-cd worker
+cd ~/3c-deploy/3c-card-games
+ls
 npx wrangler deploy
 ```
-- Binding: `CARD_GAMES_BUCKET` → `3c-library-files` (set in Cloudflare dashboard)
-- No secret environment variables required
+
+- `ls` must show `worker.js` and `wrangler.toml`.
+- Binding `CARD_GAMES_BUCKET` → `3c-library-files` is set by `wrangler.toml`.
+- No secrets and no variables are needed.
+- To check how a Worker was deployed, open Cloudflare → Workers & Pages → the Worker → **Deployments**
+  and read the coloured badge next to each version: **Wrangler** or **Dashboard**.
+  (The italic words "Manually deployed" appear for both and say nothing about the method.)
+- After a deploy, an unsigned `DELETE` on a name that does not exist must answer **401**:
+  in the browser Console, `fetch('https://3c-card-games.3c-innertherapy.workers.dev/deck/zz-check',{method:'DELETE'}).then(r=>console.log(r.status))`
 
 ### 3. GitHub Pages
 - Repository: `anica-blip/3c-card-games`
 - Pages source: `main` branch, root `/`
-- Admin protected by GitHub OAuth login
+- Admin protected by GitHub sign-in through Supabase (owner only)
 
 **Live URLs:**
 ```
@@ -272,21 +335,24 @@ Shared URL:     https://anica-blip.github.io/3c-card-games/landing.html?deck={sl
 ## Admin Workflow
 
 ```
-1. Open admin/index.html
+1. Open admin/index.html → sign in with GitHub if asked
 2. Click New Deck → auto-generates deck.01, deck.02 etc.
 3. Enter Deck Title
 4. Add Cards → + Add Card (repeat for each card)
-   - Upload Front image from computer → local preview
-   - Upload Back image from computer  → local preview
+   - Upload Front image from computer → sent to R2 at once + local preview
+   - Upload Back image from computer  → sent to R2 at once + local preview
    - Reorder with ▲ ▼ | Remove with ✕
 5. Click Save Deck
-   → JSON pushed to R2 via worker
+   → deck JSON pushed to R2 via the Worker (with the sign-in token)
    → Supabase index row created
    → Deck URL generated (copy + share)
 6. Open admin/landing-upload.html
    → Select deck from dropdown
    → Upload landing image or video from computer
-   → Sent directly to R2 via worker
+   → Sent to R2 via the Worker
+7. Delete Deck removes the list entry and the deck's JSON file.
+   The deck's media files stay in R2 (delete them in the R2 dashboard if wanted).
+   If the JSON file could not be removed, the admin says so.
 ```
 
 ---
