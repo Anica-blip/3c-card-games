@@ -1,15 +1,15 @@
-# wrangler.toml — 3C Card Games Worker
+# wrangler.toml — 3C Word Search Worker
 # 3C Thread To Success™
 #
 # RECORD ONLY. This Worker is deployed by pasting worker.js into the Cloudflare
 # dashboard editor. Never run `wrangler deploy` for it: that would replace the
 # pasted code and settings with this file.
 
-name = "3c-card-games"
+name = "3c-wordsearch"
 main = "worker.js"
 compatibility_date = "2024-01-01"
 
-# The free Cloudflare address is how the admin pages and the public deck pages
+# The free Cloudflare address is how the admin pages and the puzzle pages
 # reach this Worker (WORKER_URL), so it stays on. The preview address is not
 # used by anything and is switched off.
 workers_dev = true
@@ -18,7 +18,7 @@ preview_urls = false
 # R2 bucket binding
 # bucket_name must match the exact name in your Cloudflare R2 dashboard
 [[r2_buckets]]
-binding = "CARD_GAMES_BUCKET"
+binding = "WORDSEARCH_BUCKET"
 bucket_name = "3c-library-files"
 
 # No [vars] and no secrets: the owner check uses Supabase's public address and
