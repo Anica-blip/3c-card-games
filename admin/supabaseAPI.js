@@ -9,6 +9,7 @@
  *          card_count, created_at
  *
  * Operations:
+ *   authHeaders(extra)        → headers incl. the sign-in token (owner-only Worker calls)
  *   fetchAllDecks()           → SELECT all rows ordered by id desc
  *   saveDeck(row)             → UPSERT row on conflict deck_slug
  *   deleteDeck(slug)          → DELETE row by deck_slug
@@ -21,7 +22,32 @@ import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js
 const SUPABASE_URL = 'https://cgxjqsbrditbteqhdyus.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNneGpxc2JyZGl0YnRlcWhkeXVzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTExMTY1ODEsImV4cCI6MjA2NjY5MjU4MX0.xUDy5ic-r52kmRtocdcW8Np9-lczjMZ6YKPXc03rIG4';
 
-export const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+// Same session name as admin/auth.js (this app keeps its own, because all of
+// Chef's GitHub Pages apps share one address, anica-blip.github.io). When
+// auth.js has already created the sign-in client on this page (window.sb) it is
+// reused, so there is only one client reading and refreshing the sign-in.
+export const supabase =
+  (typeof window !== 'undefined' && window.sb) ||
+  createClient(SUPABASE_URL, SUPABASE_KEY, {
+    auth: {
+      flowType: 'pkce',
+      persistSession: true,
+      autoRefreshToken: true,
+      detectSessionInUrl: false,
+      storageKey: 'sb-3c-card-games-login',
+    },
+  });
+
+/* ── Headers for owner-only Worker calls ────────────── */
+/*
+  The Worker only saves, deletes and uploads for the owner. Every such call
+  sends the current sign-in token. Reading a deck needs no token.
+*/
+export async function authHeaders(extra = {}) {
+  const { data } = await supabase.auth.getSession();
+  const token = data && data.session && data.session.access_token;
+  return token ? { ...extra, Authorization: `Bearer ${token}` } : { ...extra };
+}
 
 /* ── FETCH ALL DECKS ────────────────────────────────── */
 /*
